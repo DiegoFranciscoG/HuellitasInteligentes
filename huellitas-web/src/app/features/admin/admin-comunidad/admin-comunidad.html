@@ -1,0 +1,64 @@
+<div class="space-y-6 max-w-5xl mx-auto">
+  <!-- Header -->
+  <div>
+    <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+      <lucide-icon [img]="Globe" class="w-6 h-6 text-[var(--primary)]"></lucide-icon> Moderación de Comunidad (Solo Lectura)
+    </h1>
+    <p class="text-xs text-gray-500">Supervisa las publicaciones y remueve contenido que infrinja las normas</p>
+  </div>
+
+  @if (mensaje()) {
+    <div class="p-4 rounded-xl bg-[var(--primary-surface)] text-[var(--primary)] text-xs border border-[var(--primary)] font-bold animate-fade-in">
+      {{ mensaje() }}
+    </div>
+  }
+
+  <!-- Posts list -->
+  <div class="space-y-4">
+    @if (cargando()) {
+      <div class="p-8 bg-white rounded-[32px] border text-center text-xs text-gray-400">Cargando publicaciones...</div>
+    } @else if (publicaciones().length === 0) {
+      <div class="p-12 bg-white rounded-[32px] border text-center text-xs text-gray-400">No hay publicaciones activas en la comunidad.</div>
+    } @else {
+      @for (p of publicaciones(); track p.id) {
+        <div class="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="space-y-2 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-xs text-gray-900">{{ p.autor_nombre || p.usuario_nombre || 'Usuario' }}</span>
+              <span class="text-[10px] text-gray-400">• {{ p.created_at | date:'short' }}</span>
+            </div>
+            <p class="text-xs text-gray-700 leading-relaxed font-medium">{{ p.contenido }}</p>
+            @if (p.imagen_url) {
+              <img [src]="p.imagen_url | mediaUrl" alt="Post" class="w-32 h-24 object-cover rounded-xl border border-gray-100">
+            }
+          </div>
+
+          <button (click)="abrirModalEliminar(p)" class="btn bg-[var(--error-surface)] text-[var(--error)] hover:bg-[var(--error)] hover:text-white py-2 px-4 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+            <lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon> Eliminar Publicación
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Delete Modal -->
+  @if (publicacionAEliminar()) {
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4 animate-fade-slide-in">
+        <h3 class="font-serif font-bold text-lg text-[var(--error)] flex items-center gap-2">
+          <lucide-icon [img]="ShieldAlert" class="w-5 h-5"></lucide-icon> Eliminar Publicación por Infracción
+        </h3>
+        <p class="text-xs text-gray-600">Escribe el motivo obligatorio por el cual eliminas esta publicación. Se enviará una notificación al autor.</p>
+
+        <textarea [ngModel]="comentarioAdmin()" (ngModelChange)="comentarioAdmin.set($event)" rows="3" class="form-input text-xs w-full p-3 rounded-xl border border-gray-200" placeholder="Ej: Contenido inapropiado o lenguaje ofensivo en la publicación."></textarea>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button (click)="cerrarModal()" class="btn btn-outline py-2 px-4 text-xs">Cancelar</button>
+          <button (click)="confirmarEliminacion()" [disabled]="!comentarioAdmin().trim()" class="btn bg-[var(--error)] text-white hover:bg-[var(--error)] py-2 px-4 text-xs font-bold rounded-xl">
+            Confirmar Eliminación
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

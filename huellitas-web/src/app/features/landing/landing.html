@@ -1,0 +1,357 @@
+<div class="landing-body">
+
+  <!-- ═══════════════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════════════ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+       [class.glass]="isScrolled()"
+       [class.border-b]="isScrolled()"
+       [class.border-black/5]="isScrolled()">
+    <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+      
+      <!-- Logo -->
+      <a routerLink="/" class="flex items-center gap-2 group">
+        <span class="material-symbols-outlined text-[var(--primary)] text-2xl icon-filled transition-transform group-hover:scale-110">schedule</span>
+        <span class="font-serif text-xl font-bold text-[var(--primary)] tracking-tight">Huellitas</span>
+      </a>
+
+      <!-- Nav Links -->
+      <div class="hidden md:flex items-center gap-8">
+        <button (click)="scrollTo('soluciones')" class="text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors">Soluciones</button>
+        <button (click)="scrollTo('tecnologia')" class="text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors">Tecnología</button>
+        <button (click)="scrollTo('testimonios')" class="text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors">Testimonios</button>
+      </div>
+
+      <!-- CTA Buttons -->
+      <div class="flex items-center gap-3">
+        <a routerLink="/auth/login" class="hidden sm:inline-flex text-sm font-semibold text-[var(--primary)] hover:opacity-70 transition-opacity px-4 py-2">
+          Iniciar Sesión
+        </a>
+        <a routerLink="/auth/register" class="btn btn-primary text-sm px-5 py-2.5">
+          Descubrir Plataforma
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════════════ -->
+  <section id="inicio" class="min-h-screen pt-20 flex items-center overflow-hidden">
+    <div class="max-w-6xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      
+      <!-- Left: Text Content -->
+      <div class="animate-fade-in-left">
+        <!-- Pill tag -->
+        <div class="pill-tag mb-6 w-fit">
+          <span class="w-2 h-2 rounded-full bg-[var(--primary)] inline-block animate-pulse-led"></span>
+          Sistema Inteligente de Cuidado
+        </div>
+
+        <!-- Headline -->
+        <h1 class="mb-6 leading-tight">
+          <span class="font-serif text-[3.8rem] lg:text-[4.5rem] font-bold text-[var(--primary)] block leading-[1.05]">
+            Tecnología<br>premium.
+          </span>
+          <span class="italic-serif text-[3.8rem] lg:text-[4.5rem] text-[var(--on-surface-variant)] block leading-[1.1]">
+            Bienestar absoluto.
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="text-[var(--on-surface-variant)] text-base leading-relaxed mb-10 max-w-md">
+          Eleva el cuidado de tus mascotas al siguiente nivel.<br>
+          Monitoreo predictivo, ecosistema conectado y diseño de vanguardia.
+        </p>
+
+        <!-- Buttons -->
+        <div class="flex flex-wrap gap-4">
+          <button (click)="scrollTo('soluciones')" class="btn btn-primary">
+            <span class="material-symbols-outlined text-lg icon-filled">explore</span>
+            Explorar Sistema
+          </button>
+          <button (click)="scrollTo('tecnologia')" class="btn btn-outline">
+            Ver Características
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Pet Image + Monitoring Card -->
+      <div class="relative animate-fade-in-right delay-200">
+        <!-- Golden background container -->
+        <div class="relative bg-[var(--accent)] rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[5/4]">
+          <!-- Dog image placeholder with gradient overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-[var(--accent)]/40 to-transparent z-[1]"></div>
+          <img 
+            src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=80" 
+            alt="Mascota monitoreada"
+            class="w-full h-full object-cover object-center mix-blend-luminosity opacity-90"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+          >
+          <!-- Fallback if image fails -->
+          <div class="absolute inset-0 items-center justify-center hidden">
+            <span class="material-symbols-outlined text-9xl text-white/50">pets</span>
+          </div>
+        </div>
+
+        <!-- Monitoring Card — floating -->
+        <div class="monitoring-card animate-float">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-[var(--primary)] animate-pulse-led"></span>
+            <span class="text-[0.65rem] font-bold tracking-widest uppercase text-[var(--on-surface-variant)]">Monitoreo Activo</span>
+          </div>
+          
+          <div class="space-y-2.5">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-[var(--on-surface-variant)]">{{ currentFeature.label }}</span>
+              <span class="font-semibold text-[var(--primary)] text-sm">{{ currentFeature.value }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-[var(--on-surface-variant)]">Estado</span>
+              <span class="text-sm font-semibold" [ngClass]="currentFeature.statusClass">{{ currentFeature.status }}</span>
+            </div>
+            <!-- Mini bar chart -->
+            <div class="flex gap-1.5 items-end pt-1">
+              @for (bar of [30, 50, 80, 60, 90, 70, 85]; track $index) {
+                <div class="flex-1 rounded-sm transition-all duration-500"
+                     [style.height.px]="bar * 0.35"
+                     [ngClass]="$index === 4 ? 'bg-[var(--primary)]' : 'bg-[var(--outline)]/60'">
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Small badge top-right -->
+        <div class="absolute -top-4 -right-4 bg-[var(--primary)] text-white text-xs font-bold px-3 py-2 rounded-2xl shadow-lg animate-float-subtle delay-300">
+          <span class="material-symbols-outlined text-sm icon-filled">verified</span>
+          Pro
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       STATS BAR
+  ═══════════════════════════════════════════════ -->
+  <section #statsSection class="bg-[var(--primary)] py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-white text-center">
+        <div>
+          <p class="font-serif text-4xl font-bold">{{ counterCasas() }}+</p>
+          <p class="text-sm opacity-70 mt-1">Hogares Conectados</p>
+        </div>
+        <div>
+          <p class="font-serif text-4xl font-bold">{{ counterDisp() }}+</p>
+          <p class="text-sm opacity-70 mt-1">Dispositivos IoT</p>
+        </div>
+        <div>
+          <p class="font-serif text-4xl font-bold">{{ counterUptime() }}%</p>
+          <p class="text-sm opacity-70 mt-1">Tiempo de Actividad</p>
+        </div>
+        <div>
+          <p class="font-serif text-4xl font-bold">{{ counterPets() }}+</p>
+          <p class="text-sm opacity-70 mt-1">Mascotas Cuidadas</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       FEATURES
+  ═══════════════════════════════════════════════ -->
+  <section id="soluciones" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16 animate-fade-in-up">
+        <div class="pill-tag w-fit mx-auto mb-4">Soluciones</div>
+        <h2 class="font-serif text-4xl lg:text-5xl text-[var(--primary)] mb-4">Todo el ecosistema<br><em>en tus manos.</em></h2>
+        <p class="text-[var(--on-surface-variant)] max-w-xl mx-auto">Un sistema completo que monitorea, actúa y aprende para mantener a tus mascotas en el mejor estado posible.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="card tilt-card p-8 animate-fade-in-up delay-200">
+          <div class="w-14 h-14 bg-[var(--primary)]/8 rounded-2xl flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-[var(--primary)] text-3xl icon-filled">sensors</span>
+          </div>
+          <h3 class="font-serif text-xl text-[var(--primary)] mb-3">Monitoreo en Tiempo Real</h3>
+          <p class="text-[var(--on-surface-variant)] text-sm leading-relaxed">Temperatura, humedad, nivel de agua y actividad — todo en un panel unificado, actualizado cada segundo.</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="card tilt-card p-8 animate-fade-in-up delay-300">
+          <div class="w-14 h-14 bg-[var(--accent)]/15 rounded-2xl flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-[var(--primary)] text-3xl icon-filled">smart_toy</span>
+          </div>
+          <h3 class="font-serif text-xl text-[var(--primary)] mb-3">IA Predictiva</h3>
+          <p class="text-[var(--on-surface-variant)] text-sm leading-relaxed">Algoritmos de machine learning que detectan anomalías antes de que se conviertan en problemas.</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="card tilt-card p-8 animate-fade-in-up delay-400">
+          <div class="w-14 h-14 bg-[var(--primary)]/8 rounded-2xl flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-[var(--primary)] text-3xl icon-filled">notifications_active</span>
+          </div>
+          <h3 class="font-serif text-xl text-[var(--primary)] mb-3">Alertas Instantáneas</h3>
+          <p class="text-[var(--on-surface-variant)] text-sm leading-relaxed">Recibe notificaciones críticas al momento. Configura umbrales personalizados para cada dispositivo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       TECHNOLOGY SECTION
+  ═══════════════════════════════════════════════ -->
+  <section id="tecnologia" class="py-24 bg-[var(--primary)] relative overflow-hidden">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-0 right-0 w-96 h-96 rounded-full bg-[var(--accent)] blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-white blur-3xl"></div>
+    </div>
+    
+    <div class="max-w-6xl mx-auto px-6 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div class="text-white animate-fade-in-left">
+          <div class="inline-flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 text-xs font-bold tracking-widest uppercase mb-6 text-white/70">
+            Tecnología
+          </div>
+          <h2 class="font-serif text-4xl lg:text-5xl mb-6 leading-tight">
+            Hardware ESP32.<br><em class="opacity-80">Software de élite.</em>
+          </h2>
+          <p class="text-white/70 text-base leading-relaxed mb-8">
+            Arquitectura Spring Boot en la nube + PostgreSQL en Neon. Dispositivos ESP32 con sensores DHT11, ultrasonidos y actuadores — todo conectado en tiempo real.
+          </p>
+          <div class="grid grid-cols-2 gap-4">
+            @for (tech of ['Spring Boot', 'PostgreSQL', 'ESP32 IoT', 'Angular 21', 'Neon Cloud', 'JWT Auth']; track tech) {
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[var(--accent)]"></span>
+                <span class="text-sm text-white/80">{{ tech }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 animate-fade-in-right delay-200">
+          @for (device of devices; track device.name) {
+            <div class="glass rounded-2xl p-5 tilt-card">
+              <div class="text-3xl mb-3 text-[var(--primary)]"><span class="material-symbols-outlined">{{ device.icon }}</span></div>
+              <p class="text-[var(--primary)] font-semibold text-sm">{{ device.name }}</p>
+              <p class="text-[var(--on-surface-variant)] text-xs mt-1">{{ device.desc }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       TESTIMONIALS
+  ═══════════════════════════════════════════════ -->
+  <section id="testimonios" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <div class="pill-tag w-fit mx-auto mb-4">Testimonios</div>
+        <h2 class="font-serif text-4xl text-[var(--primary)]">Lo que dicen nuestros<br><em>usuarios premium.</em></h2>
+      </div>
+
+      @if (currentTestimonial; as t) {
+        <div class="max-w-xl mx-auto transition-all duration-300 ease-out"
+             [class.opacity-0]="!testimonialVisible()"
+             [class.translate-y-2]="!testimonialVisible()"
+             [class.opacity-100]="testimonialVisible()"
+             [class.translate-y-0]="testimonialVisible()">
+          <div class="card p-8 tilt-card text-center">
+            <div class="flex gap-1 mb-4 justify-center">
+              @for (s of [1,2,3,4,5]; track s) {
+                <span class="text-[#8a6a00] text-sm">★</span>
+              }
+            </div>
+            <p class="text-[var(--on-surface-variant)] text-base leading-relaxed mb-5 italic">"{{ t.contenido }}"</p>
+            <div class="flex items-center gap-3 justify-center">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white bg-[var(--primary)] overflow-hidden shrink-0">
+                @if (t.foto_url) {
+                  <img [src]="t.foto_url | mediaUrl" class="w-full h-full object-cover" alt="{{ t.nombre }}">
+                } @else {
+                  {{ t.nombre.charAt(0) }}
+                }
+              </div>
+              <div class="text-left">
+                <p class="font-semibold text-sm text-[var(--primary)]">{{ t.nombre }}</p>
+                <p class="text-xs text-[var(--on-surface-variant)]">Usuario de Huellitas</p>
+              </div>
+            </div>
+          </div>
+          @if (testimonials().length > 1) {
+            <div class="flex gap-1.5 justify-center mt-5">
+              @for (t2 of testimonials(); track $index) {
+                <span [class]="$index === currentTestimonialIndex()
+                  ? 'w-1.5 h-1.5 rounded-full transition-colors bg-[var(--primary)]'
+                  : 'w-1.5 h-1.5 rounded-full transition-colors bg-[var(--primary)]/20'"></span>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-center text-[var(--on-surface-variant)] text-sm">Todavía no hay testimonios publicados.</p>
+      }
+      <p class="text-center text-[var(--on-surface-variant)] text-xs mt-8">
+        ¿Quieres aparecer aquí? Publica en la Comunidad con la etiqueta <strong>#testimonio</strong>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       DESCARGA LA APP
+  ═══════════════════════════════════════════════ -->
+  <section class="py-20 bg-white">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <div class="w-16 h-16 rounded-3xl bg-[var(--primary)] flex items-center justify-center mx-auto mb-6">
+        <span class="material-symbols-outlined icon-filled text-white text-3xl">android</span>
+      </div>
+      <h2 class="font-serif text-3xl lg:text-4xl text-[var(--primary)] mb-4">
+        Llévate a <em>tus mascotas</em> en el bolsillo.
+      </h2>
+      <p class="text-[var(--on-surface-variant)] mb-8">
+        La app de Android controla el IoT de tu vivienda y tus cámaras desde donde estés.
+      </p>
+      <a routerLink="/descargar" class="btn btn-primary inline-flex items-center gap-2">
+        <span class="material-symbols-outlined icon-filled">download</span>
+        Descarga la App
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       CTA FINAL
+  ═══════════════════════════════════════════════ -->
+  <section class="py-24 bg-[var(--surface-cream)]">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <h2 class="font-serif text-4xl lg:text-5xl text-[var(--primary)] mb-6">
+        El cuidado que<br><em>tus mascotas merecen.</em>
+      </h2>
+      <p class="text-[var(--on-surface-variant)] mb-10">Únete hoy y transforma la forma en que cuidas a tu familia.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a routerLink="/auth/register" class="btn btn-primary">
+          <span class="material-symbols-outlined icon-filled">pets</span>
+          Comenzar Gratis
+        </a>
+        <a routerLink="/auth/login" class="btn btn-outline">
+          Ya tengo cuenta
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════ -->
+  <footer class="bg-[var(--primary)] py-12">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-white/60 text-sm">
+      <div class="font-serif text-white text-xl font-bold">Huellitas</div>
+      <p>© 2026 Huellitas IoT Ecosystem. Premium Care for Every Paw.</p>
+      <div class="flex gap-6">
+        <a routerLink="/terminos" class="hover:text-white transition-colors">Términos</a>
+        <a routerLink="/privacidad" class="hover:text-white transition-colors">Privacidad</a>
+      </div>
+    </div>
+  </footer>
+
+</div>

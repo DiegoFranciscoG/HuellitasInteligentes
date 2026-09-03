@@ -1,0 +1,344 @@
+<div class="mb-8 max-w-3xl mx-auto">
+  <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Comunidad Huellitas</h2>
+  <p class="text-[var(--on-surface-variant)] mt-2">Comparte experiencias, fotos y dudas con otros amantes de las mascotas.</p>
+
+  <!-- Buscador por texto, autor o hashtag -->
+  <div class="mt-5 flex flex-col sm:flex-row gap-2 animate-fade-in-up">
+    <input
+      type="text"
+      [ngModel]="busqueda()"
+      (ngModelChange)="busqueda.set($event)"
+      (keyup.enter)="buscar()"
+      placeholder="Buscar publicaciones, autores o #temas..."
+      class="flex-1 bg-white border border-[var(--outline)]/40 rounded-full px-5 py-3 text-sm text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+    >
+    <div class="flex gap-2">
+      <button
+        (click)="buscar()"
+        class="px-5 py-3 rounded-full bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-light)] transition-colors"
+      >Buscar</button>
+      @if (busquedaActiva()) {
+        <button
+          (click)="limpiarBusqueda()"
+          class="px-5 py-3 rounded-full border border-[var(--outline)]/50 text-[var(--on-surface-variant)] text-sm font-semibold hover:bg-black/5 transition-colors"
+        >Limpiar</button>
+      }
+    </div>
+  </div>
+
+  @if (hashtags().length) {
+    <div class="mt-3 flex flex-wrap gap-2 animate-fade-in-up delay-100">
+      @for (h of hashtags(); track h.tag) {
+        <button
+          (click)="buscarHashtag(h.tag)"
+          class="px-3 py-1.5 rounded-full text-xs font-semibold border border-[var(--primary)]/25 text-[var(--primary)] bg-[var(--primary)]/5 hover:bg-[var(--primary)]/10 transition-colors"
+        >#{{ h.tag }} <span class="opacity-60">{{ h.total }}</span></button>
+      }
+    </div>
+  }
+
+  @if (busquedaActiva()) {
+    <p class="mt-3 text-sm text-[var(--on-surface-variant)]">
+      Resultados para <span class="font-semibold text-[var(--primary)]">{{ busquedaActiva() }}</span>
+      — {{ posts().length }} publicación(es)
+    </p>
+  }
+</div>
+
+@if (isLoading()) {
+  <div class="max-w-3xl mx-auto space-y-6">
+    <div class="bg-white rounded-3xl p-6 border border-[var(--outline)]/20 animate-pulse h-32"></div>
+    <div class="bg-white rounded-3xl p-6 border border-[var(--outline)]/20 animate-pulse h-64"></div>
+  </div>
+} @else {
+  <!-- Formulario Nueva Publicación -->
+  @if (user()) {
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-[var(--outline)]/20 max-w-3xl mx-auto mb-8 animate-fade-in">
+      <div class="flex gap-4">
+        <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden">
+          @if (user()?.foto_url) {
+            <img [src]="getMediaUrl(user()!.foto_url)" alt="Avatar" class="w-full h-full object-cover rounded-full">
+          } @else {
+            {{ user()?.nombre?.[0]?.toUpperCase() || 'U' }}
+          }
+        </div>
+        <div class="flex-1">
+          <textarea
+            placeholder="¿Tienes alguna duda o quieres compartir algo sobre tu mascota?"
+            [(ngModel)]="nuevoPost"
+            class="w-full bg-black/[0.02] border border-[var(--outline)]/20 rounded-2xl p-4 text-sm focus:outline-none focus:border-[var(--accent)] resize-none"
+            rows="2"
+          ></textarea>
+
+          @if (imagenSeleccionada()) {
+            <div class="relative w-32 h-32 mt-2 rounded-2xl overflow-hidden border border-gray-200">
+              @if (esVideoPreview()) {
+                <video [src]="imagenSeleccionada()" class="w-full h-full object-cover" muted loop autoplay></video>
+              } @else {
+                <img [src]="imagenSeleccionada()" class="w-full h-full object-cover">
+              }
+              <button (click)="imagenSeleccionada.set(''); archivoSeleccionado.set(null)" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center">
+                <lucide-icon [img]="X" class="w-3.5 h-3.5"></lucide-icon>
+              </button>
+            </div>
+          }
+
+          <div class="flex items-center justify-between mt-3">
+            <div class="flex gap-2">
+              <label class="p-2 text-[var(--on-surface-variant)] hover:bg-black/5 hover:text-[var(--primary)] rounded-full transition-colors cursor-pointer" title="Subir imagen">
+                <lucide-icon [img]="ImageIcon" class="w-5 h-5"></lucide-icon>
+                <input type="file" accept="image/*,video/mp4,video/webm" class="hidden" (change)="onFileSelected($event)">
+              </label>
+            </div>
+            <button class="btn btn-primary px-6 py-2 text-sm rounded-xl" (click)="publicar()">Publicar</button>
+          </div>
+
+          @if (errorModeracion()) {
+            <div class="mt-3 p-3 bg-[var(--error-surface)] text-[var(--error)] text-xs font-semibold rounded-xl flex items-center gap-2 border border-[var(--error)]">
+              <lucide-icon [img]="ShieldAlert" class="w-4 h-4"></lucide-icon> {{ errorModeracion() }}
+            </div>
+          }
+          @if (sugerenciaInclusiva()) {
+            <div class="mt-3 p-3 bg-[var(--primary-surface)] text-[var(--primary)] text-xs font-semibold rounded-xl flex items-center gap-2 border border-[var(--primary)]">
+              <lucide-icon [img]="MessageSquare" class="w-4 h-4"></lucide-icon> {{ sugerenciaInclusiva() }}
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Feed -->
+  <div class="space-y-6 max-w-3xl mx-auto stagger-cards pb-10">
+    @for (post of posts(); track post.id) {
+      <div class="bg-white rounded-3xl border border-[var(--outline)]/20 shadow-sm hover:shadow-md transition-all overflow-hidden" [id]="'post-' + post.id">
+        <!-- Header del Post -->
+        <div class="p-5 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden" [style.background-color]="post.color">
+              @if (post.fotoUrl) {
+                <img [src]="getMediaUrl(post.fotoUrl)" alt="Avatar" class="w-full h-full object-cover rounded-full">
+              } @else {
+                {{ post.initials }}
+              }
+            </div>
+            <div>
+              <p class="font-bold text-sm text-[var(--primary)] leading-none mb-1">{{ post.autor }}</p>
+              <p class="text-xs text-[var(--on-surface-variant)]">{{ post.tiempo }}</p>
+            </div>
+          </div>
+
+          <!-- Acciones Moderador / Autor -->
+          <div class="flex items-center gap-2">
+            @if (puedeEditar(post)) {
+              <button
+                class="p-1.5 text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-black/5 rounded-lg transition-colors"
+                (click)="toggleEdit(post)"
+                title="Editar publicación (dentro de los primeros 5 minutos)"
+              >
+                <lucide-icon [img]="Pencil" class="w-4 h-4"></lucide-icon>
+              </button>
+            }
+            @if (puedeEditarEliminar(post)) {
+              <button
+                class="p-1.5 text-[var(--on-surface-variant)] hover:text-[var(--error)] hover:bg-[var(--error-surface)] rounded-lg transition-colors"
+                (click)="eliminarPost(post.id)"
+                title="Eliminar para todos"
+              >
+                <lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon>
+              </button>
+            }
+            <button
+              class="p-1.5 text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-black/5 rounded-lg transition-colors"
+              (click)="ocultarPostParaMi(post.id)"
+              title="Eliminar solo para mí"
+            >
+              <lucide-icon [img]="EyeOff" class="w-4 h-4"></lucide-icon>
+            </button>
+
+            @if (user()) {
+              @if (isAdmin() && post.autorId !== user()?.id) {
+                <button 
+                  class="p-1.5 text-[var(--on-surface-variant)] hover:text-[#8a6a00] hover:bg-[rgba(253,192,3,0.15)] rounded-lg transition-colors"
+                  (click)="darStrike(post)"
+                  title="Dar Strike al usuario"
+                >
+                  <lucide-icon [img]="ShieldAlert" class="w-4 h-4"></lucide-icon>
+                </button>
+              } @else if (post.autorId !== user()?.id) {
+                <button 
+                  class="p-1.5 text-[var(--on-surface-variant)] hover:text-[#8a6a00] hover:bg-[rgba(253,192,3,0.15)] rounded-lg transition-colors"
+                  (click)="abrirModalDenuncia(post)"
+                  title="Denunciar publicación"
+                >
+                  <lucide-icon [img]="Flag" class="w-4 h-4"></lucide-icon>
+                </button>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Post Content -->
+        <div class="p-5 pt-2">
+          @if (post.editando) {
+            <textarea 
+              [(ngModel)]="post.contenido"
+              class="w-full bg-black/[0.02] border border-[var(--outline)]/20 rounded-xl p-3 text-sm focus:outline-none focus:border-[var(--accent)] resize-none mb-3"
+              rows="3"
+            ></textarea>
+            <div class="flex justify-end gap-2 mb-3">
+              <button class="btn btn-ghost px-4 py-1.5 text-xs rounded-lg" (click)="toggleEdit(post)">Cancelar</button>
+              <button class="btn btn-primary px-4 py-1.5 text-xs rounded-lg" (click)="guardarEdicion(post)">Guardar</button>
+            </div>
+          } @else {
+            <p class="text-sm text-[var(--on-surface-variant)] leading-relaxed mb-3">{{ post.contenido }}</p>
+          }
+        </div>
+
+        <!-- Post Image/Video -->
+        @if (post.imagen) {
+          <div class="w-full max-h-[500px] relative bg-black/5 flex items-center justify-center overflow-hidden perspective-[1000px]">
+            @if (post.mediaType === 'VIDEO') {
+              <div class="w-full h-full group p-4">
+                <video 
+                  [src]="getMediaUrl(post.imagen)" 
+                  class="max-h-[460px] w-full object-contain hover:scale-[1.02] hover:-rotate-1 shadow-md hover:shadow-2xl transition-all duration-700 ease-out transform-gpu rounded-xl"
+                  controls
+                  preload="metadata"
+                ></video>
+              </div>
+            } @else {
+              <img [src]="getMediaUrl(post.imagen)" alt="Post image" class="max-h-96 w-full object-contain">
+            }
+          </div>
+        }
+
+        <!-- Post Actions Bar -->
+        <div class="px-5 py-3 border-t border-[var(--outline)]/10 bg-black/[0.01] flex items-center gap-6">
+          <div class="relative flex items-center" (mouseenter)="post.mostrarPicker = true" (mouseleave)="post.mostrarPicker = false">
+            <button 
+              class="flex items-center gap-2 text-sm font-medium transition-colors group text-[var(--on-surface-variant)] hover:text-[var(--error)]"
+            >
+              <lucide-icon [img]="Heart" class="w-5 h-5 group-hover:scale-110 transition-transform"></lucide-icon>
+              Reaccionar
+            </button>
+            
+            @if (post.mostrarPicker) {
+              <div class="absolute bottom-full left-0 mb-2 bg-white shadow-xl rounded-full px-3 py-2 flex gap-2 animate-fade-in z-10 border border-gray-100">
+                @for (emoji of EMOJIS; track emoji) {
+                  <button (click)="toggleReaccion(post, emoji, 'publicacion')" 
+                          class="text-xl hover:scale-125 hover:-translate-y-1 transition-all duration-200"
+                          [class.scale-125]="haReaccionado(post, emoji)">
+                    {{ emoji }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          @if (agruparReacciones(post.reacciones).length > 0) {
+            <div class="flex items-center gap-1 bg-gray-50/80 w-fit px-2 py-0.5 rounded-full border border-gray-100">
+              <div class="flex -space-x-1">
+                @for (reac of agruparReacciones(post.reacciones); track reac.emoji) {
+                  <span class="text-[13px] bg-white rounded-full shadow-sm" [title]="reac.count + ' reacciones'">{{ reac.emoji }}</span>
+                }
+              </div>
+              <span class="text-xs text-gray-500 font-medium ml-1">
+                {{ post.reacciones.length }}
+              </span>
+            </div>
+          }
+          
+          <button (click)="toggleComentarios(post)" class="flex items-center gap-2 text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors group">
+            <lucide-icon [img]="MessageSquare" class="w-5 h-5 group-hover:scale-110 transition-transform"></lucide-icon>
+            {{ post.comentarios }} Comentarios
+          </button>
+        </div>
+
+        <!-- Sección de Comentarios Expandible -->
+        @if (post.mostrarComentarios) {
+          <div class="p-5 border-t border-[var(--outline)]/10 bg-gray-50/50 space-y-4">
+            <div class="space-y-3">
+              @for (c of post.listaComentarios; track c.id) {
+                <div class="flex items-start gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
+                  <div class="w-7 h-7 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center font-bold text-xs shrink-0">
+                    {{ (c.autor_nombre || 'U')[0].toUpperCase() }}
+                  </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-bold text-[var(--primary)] mb-0.5">{{ c.autor_nombre }}</p>
+                      <p class="text-xs text-gray-700 leading-relaxed">{{ c.contenido }}</p>
+                      
+                      <!-- Boton de reaccion para comentario -->
+                      <div class="flex items-center gap-2 mt-1">
+                        <div class="relative flex items-center" (mouseenter)="c.mostrarPicker = true" (mouseleave)="c.mostrarPicker = false">
+                          <button class="text-[10px] text-gray-500 hover:text-[var(--error)] font-bold">Reaccionar</button>
+                          @if (c.mostrarPicker) {
+                            <div class="absolute bottom-full left-0 mb-1 bg-white shadow-xl rounded-full px-2 py-1 flex gap-1 animate-fade-in z-10 border border-gray-100">
+                              @for (emoji of EMOJIS; track emoji) {
+                                <button (click)="toggleReaccion(c, emoji, 'comentario')" 
+                                        class="text-sm hover:scale-125 hover:-translate-y-1 transition-all"
+                                        [class.scale-125]="haReaccionado(c, emoji)">
+                                  {{ emoji }}
+                                </button>
+                              }
+                            </div>
+                          }
+                        </div>
+
+                        <!-- Contador -->
+                        @if (agruparReacciones(c.reacciones).length > 0) {
+                          <div class="flex items-center gap-0.5 bg-gray-50 px-1.5 py-0.5 rounded-full border border-gray-100">
+                            <div class="flex -space-x-1">
+                              @for (reac of agruparReacciones(c.reacciones); track reac.emoji) {
+                                <span class="text-[10px] bg-white rounded-full shadow-sm">{{ reac.emoji }}</span>
+                              }
+                            </div>
+                            <span class="text-[10px] text-gray-500 font-bold ml-1">{{ c.reacciones.length }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                </div>
+              } @empty {
+                <p class="text-xs text-gray-400 italic">No hay comentarios aún. ¡Sé el primero en comentar!</p>
+              }
+            </div>
+
+            @if (user()) {
+              <div class="flex gap-2 pt-2">
+                <input type="text" [(ngModel)]="post.nuevoComentario" placeholder="Escribe un comentario..." (keydown.enter)="comentar(post)" class="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[var(--primary)]">
+                <button (click)="comentar(post)" class="btn btn-primary px-4 py-2 text-xs rounded-xl flex items-center gap-1">
+                  <lucide-icon [img]="Send" class="w-3.5 h-3.5"></lucide-icon> Comentar
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- Modal de Denuncia -->
+@if (modalDenunciaOpen()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] p-6 max-w-sm w-full shadow-2xl border border-gray-100 space-y-4 animate-fade-slide-in">
+      <h3 class="font-serif font-bold text-lg text-[#8a6a00] flex items-center gap-2">
+        <lucide-icon [img]="Flag" class="w-5 h-5"></lucide-icon> Denunciar Publicación
+      </h3>
+      
+      <div class="space-y-3">
+        <label class="block text-xs font-bold text-gray-700 mb-1">Motivo de la denuncia *</label>
+        <textarea [ngModel]="motivoDenuncia()" (ngModelChange)="motivoDenuncia.set($event)" rows="3" 
+                  class="form-input text-sm w-full py-2 px-3 rounded-xl border border-gray-200 resize-none" 
+                  placeholder="Explica brevemente por qué denuncias esta publicación..."></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+        <button (click)="cerrarModalDenuncia()" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">Cancelar</button>
+        <button (click)="denunciarPostConfirmado()" [disabled]="!motivoDenuncia().trim()" class="btn px-4 py-2 text-sm rounded-xl font-bold bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--primary)] disabled:opacity-50">Enviar Denuncia</button>
+      </div>
+    </div>
+  </div>
+}
+

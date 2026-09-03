@@ -1,0 +1,74 @@
+<div class="mb-8">
+  <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Planes de Suscripción</h2>
+  <p class="text-[var(--on-surface-variant)] mt-2">Elige el plan que mejor se adapte a ti y a tus mascotas.</p>
+</div>
+
+@if (mensajePlan()) {
+  <div class="max-w-4xl mx-auto mb-6 p-4 rounded-xl bg-[var(--primary-surface)] border border-[var(--primary)] text-[var(--primary)] text-xs font-bold animate-fade-in shadow-sm">
+    {{ mensajePlan() }}
+  </div>
+}
+
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+  @for (plan of planes(); track plan.id) {
+    <div 
+      class="card relative p-8 transition-all hover:-translate-y-2 bg-white rounded-3xl border shadow-sm"
+      [ngClass]="plan.precio_oferta && plan.precio_oferta > 0 ? 'border-2 border-[var(--accent)] shadow-lg shadow-[var(--accent)]/10 scale-105' : 'border-[var(--outline)]/20'"
+    >
+      @if (plan.descuento_porcentaje && plan.descuento_porcentaje > 0) {
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[var(--accent)] text-[var(--primary)] px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
+          <lucide-icon [img]="Crown" class="w-4 h-4"></lucide-icon> Oferta -{{ plan.descuento_porcentaje }}%
+        </div>
+      }
+
+      <div class="text-center mb-6">
+        <h3 class="font-serif text-2xl font-bold mb-2 text-[var(--primary)]">{{ plan.nombre }}</h3>
+        <div class="flex justify-center items-baseline gap-1">
+          <span class="text-3xl font-bold text-gray-900">${{ plan.precio_oferta && plan.precio_oferta > 0 ? plan.precio_oferta : plan.precio_mensual }}</span>
+          <span class="text-[var(--on-surface-variant)] text-sm">/mes</span>
+        </div>
+        @if (plan.precio_oferta && plan.precio_oferta > 0 && plan.precio_mensual > plan.precio_oferta) {
+          <p class="text-xs text-gray-400 line-through">Antes ${{ plan.precio_mensual }}</p>
+        }
+      </div>
+
+      <div class="space-y-4 mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-[var(--primary-surface)] flex items-center justify-center text-[var(--primary)] shrink-0">
+            <lucide-icon [img]="Check" class="w-4 h-4"></lucide-icon>
+          </div>
+          <span class="text-sm font-medium">Hasta {{ plan.limite_mascotas ?? 2 }} Mascotas</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-[var(--primary-surface)] flex items-center justify-center text-[var(--primary)] shrink-0">
+            <lucide-icon [img]="Check" class="w-4 h-4"></lucide-icon>
+          </div>
+          <span class="text-sm font-medium">{{ plan.limite_almacenamiento_mb || 1000 }} MB Almacenamiento</span>
+        </div>
+        @if (plan.descripcion) {
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-[var(--primary-surface)] flex items-center justify-center text-[var(--primary)] shrink-0">
+              <lucide-icon [img]="Check" class="w-4 h-4"></lucide-icon>
+            </div>
+            <span class="text-sm font-medium">{{ plan.descripcion }}</span>
+          </div>
+        }
+      </div>
+
+      <button 
+        class="w-full btn py-3 text-sm flex items-center justify-center gap-2 rounded-xl font-bold transition-all"
+        [ngClass]="planActualId() === plan.id ? 'btn-ghost border border-[var(--outline)]/30 bg-gray-100 text-gray-700' : 'btn-primary bg-[var(--primary)] text-white hover:bg-[#112a11]'"
+        [disabled]="planActualId() === plan.id || isLoading()"
+        (click)="seleccionarPlan(plan.id)"
+      >
+        @if (isLoading() && planActualId() !== plan.id) {
+          <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Procesando...
+        } @else if (planActualId() === plan.id) {
+          <lucide-icon [img]="Shield" class="w-4 h-4 text-[var(--primary)]"></lucide-icon> Plan Actual
+        } @else {
+          Elegir Plan {{ plan.nombre }}
+        }
+      </button>
+    </div>
+  }
+</div>

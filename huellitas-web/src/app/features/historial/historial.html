@@ -1,0 +1,74 @@
+<div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div>
+    <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold flex items-center gap-2">
+      <lucide-icon [img]="Activity" class="w-7 h-7 text-[var(--accent)]"></lucide-icon> Historial de Actividad
+    </h2>
+    <p class="text-[var(--on-surface-variant)] mt-1 text-sm">
+      @if (vistaHogar()) {
+        Registro cronológico de la actividad de todos los miembros de tu hogar.
+      } @else {
+        Registro cronológico de tus acciones y eventos de seguridad en la plataforma.
+      }
+    </p>
+  </div>
+  @if (user()?.rol === 'PROPIETARIO') {
+    <div class="flex rounded-xl border border-[rgba(27,48,34,0.15)] p-1 shrink-0">
+      <button (click)="cambiarVista(false)"
+        class="px-4 py-2 rounded-lg text-sm font-bold transition-all"
+        [class.bg-[var(--primary)]]="!vistaHogar()" [class.text-white]="!vistaHogar()"
+        [class.text-[var(--on-surface-variant)]]="vistaHogar()">
+        Mi actividad
+      </button>
+      <button (click)="cambiarVista(true)"
+        class="px-4 py-2 rounded-lg text-sm font-bold transition-all"
+        [class.bg-[var(--primary)]]="vistaHogar()" [class.text-white]="vistaHogar()"
+        [class.text-[var(--on-surface-variant)]]="!vistaHogar()">
+        Actividad del hogar
+      </button>
+    </div>
+  }
+</div>
+
+@if (isLoading()) {
+  <div class="flex justify-center items-center h-64">
+    <div class="w-10 h-10 border-4 border-[rgba(195,200,193,0.4)] border-t-[var(--primary)] rounded-full animate-spin"></div>
+  </div>
+} @else if (logs().length === 0) {
+  <div class="card p-12 text-center border-dashed border-2 border-[rgba(27,48,34,0.1)]">
+    <lucide-icon [img]="Clock" class="w-12 h-12 text-[rgba(27,48,34,0.3)] mx-auto mb-3"></lucide-icon>
+    <h3 class="font-bold text-lg text-[var(--primary)]">Sin actividad reciente</h3>
+    <p class="text-sm text-[var(--on-surface-variant)] mt-1">
+      @if (vistaHogar()) {
+        Las acciones de los miembros de tu hogar se registrarán aquí.
+      } @else {
+        Las acciones que realices en tu cuenta se registrarán aquí.
+      }
+    </p>
+  </div>
+} @else {
+  <div class="space-y-4 max-w-4xl">
+    @for (log of logs(); track log.id) {
+      <div (click)="navegarAElemento(log)" class="card p-5 border-l-4 border-[var(--primary)] shadow-sm hover:shadow-md transition-all flex items-start gap-4 cursor-pointer group">
+        <div class="w-10 h-10 rounded-xl bg-[var(--primary-surface)] text-[var(--primary)] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+          <lucide-icon [img]="getIconForAccion(log.accion || '')" class="w-5 h-5"></lucide-icon>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-sm text-[var(--primary)] uppercase tracking-wider group-hover:underline flex items-center gap-1">
+              {{ log.accion || 'Acción' }}
+            </span>
+            <span class="text-xs text-[var(--on-surface-variant)] font-mono flex items-center gap-1">
+              <lucide-icon [img]="Clock" class="w-3.5 h-3.5"></lucide-icon> {{ log.created_at | date:'short' }}
+            </span>
+          </div>
+          <p class="text-sm text-[var(--on-surface-variant)] mt-1">
+            @if (vistaHogar() && log.autor_nombre) {
+              <span class="font-semibold">{{ log.autor_nombre }}</span> ·
+            }
+            Actividad en: <span class="font-semibold capitalize">{{ log.entidad }}</span>
+          </p>
+        </div>
+      </div>
+    }
+  </div>
+}

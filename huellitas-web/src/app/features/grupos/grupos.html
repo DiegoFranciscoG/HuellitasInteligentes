@@ -1,0 +1,343 @@
+<!-- Header Grupos -->
+<div class="mb-8 flex items-center justify-between">
+  <div>
+    <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Grupos de la Comunidad</h2>
+    <p class="text-[var(--on-surface-variant)] mt-2">Conéctate con otros dueños de mascotas y comparte consejos y experiencias.</p>
+  </div>
+  <button (click)="mostrarModalCrear.set(true)" class="btn btn-primary px-5 py-2.5 rounded-2xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+    <lucide-icon [img]="Plus" class="w-5 h-5"></lucide-icon> Crear Grupo
+  </button>
+</div>
+
+<!-- Modal Crear Grupo -->
+@if (mostrarModalCrear()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 animate-scale-in">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="font-serif text-xl font-bold text-[var(--primary)]">Crear Nuevo Grupo</h3>
+        <button (click)="mostrarModalCrear.set(false)" class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+          <lucide-icon [img]="X" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+
+      <form (ngSubmit)="crearGrupo()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1">Nombre del Grupo *</label>
+          <input type="text" [ngModel]="nuevoGrupoNombre()" (ngModelChange)="nuevoGrupoNombre.set($event)" name="nombre" placeholder="ej. Club de Golden Retrievers" required class="w-full bg-black/[0.03] border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--primary)]" [class.border-[var(--error)]]="errorNuevoGrupoNombre()">
+          @if (errorNuevoGrupoNombre()) {
+            <div class="mt-1 flex items-center gap-1.5 text-[var(--error)] text-xs">
+              <lucide-angular [img]="AlertCircle" class="w-3.5 h-3.5"></lucide-angular>
+              <span>{{ errorNuevoGrupoNombre() }}</span>
+            </div>
+          }
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1">Descripción</label>
+          <textarea [ngModel]="nuevoGrupoDescripcion()" (ngModelChange)="nuevoGrupoDescripcion.set($event)" name="descripcion" placeholder="¿De qué trata este grupo?" rows="3" class="w-full bg-black/[0.03] border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--primary)] resize-none"></textarea>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3">
+          <button type="button" (click)="mostrarModalCrear.set(false)" class="btn btn-ghost px-5 py-2 rounded-xl text-sm">Cancelar</button>
+          <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-xl text-sm font-bold">Crear Grupo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Gestión de Miembros (solo ADMIN del grupo) -->
+@if (mostrarModalMiembros() && grupoActivo()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-serif text-xl font-bold text-[var(--primary)]">Gestionar "{{ grupoActivo().nombre }}"</h3>
+        <button (click)="mostrarModalMiembros.set(false)" class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+          <lucide-icon [img]="X" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-2 mb-4">
+        @for (miembro of miembrosGrupoActivo(); track miembro.id) {
+          <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl hover:bg-gray-50">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-9 h-9 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0 font-bold text-sm">
+                {{ miembro.nombre?.charAt(0) || '?' }}
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold truncate">{{ miembro.nombre }}</p>
+                @if (miembro.rol_en_grupo === 'ADMIN') {
+                  <span class="text-[10px] font-bold text-[#b98900] flex items-center gap-1"><lucide-icon [img]="Crown" class="w-3 h-3"></lucide-icon> Administrador</span>
+                }
+              </div>
+            </div>
+            @if (miembro.rol_en_grupo !== 'ADMIN') {
+              <div class="flex items-center gap-1 shrink-0">
+                <button (click)="transferirAdmin(miembro)" title="Transferir administración" class="p-1.5 rounded-lg hover:bg-[rgba(253,192,3,0.15)] text-[#8a6a00]">
+                  <lucide-icon [img]="Crown" class="w-4 h-4"></lucide-icon>
+                </button>
+                <button (click)="expulsarMiembro(miembro)" title="Expulsar del grupo" class="p-1.5 rounded-lg hover:bg-[var(--error-surface)] text-[var(--error)]">
+                  <lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon>
+                </button>
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="text-sm text-gray-400 text-center py-6">Cargando miembros...</p>
+        }
+      </div>
+
+      <button (click)="eliminarGrupoActivo()" class="btn w-full py-2.5 rounded-xl text-sm font-bold bg-[var(--error-surface)] text-[var(--error)] hover:bg-[var(--error-surface)] flex items-center justify-center gap-2">
+        <lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon> Eliminar grupo por completo
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Chat Modal / View -->
+@if (grupoActivo()) {
+  <div class="card p-0 overflow-hidden flex flex-col h-[700px] border-2 border-[var(--primary)]/20 shadow-2xl relative">
+    
+    <!-- Chat Header -->
+    <div class="bg-[var(--primary)] p-4 text-white flex items-center justify-between shadow-md z-10">
+      <div class="flex items-center gap-3">
+        <button (click)="cerrarChat()" class="p-2 hover:bg-white/10 rounded-full transition-colors">
+          <lucide-icon [img]="ArrowLeft" class="w-5 h-5"></lucide-icon>
+        </button>
+        <div>
+          <h3 class="font-bold text-lg leading-tight">{{ grupoActivo().nombre }}</h3>
+          <p class="text-white/70 text-xs flex items-center gap-1">
+            <lucide-icon [img]="Users" class="w-3.5 h-3.5"></lucide-icon> {{ grupoActivo().miembros }} miembros
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        @if (grupoActivo().rol === 'ADMIN') {
+          <button (click)="abrirGestionMiembros()" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-[#fdc003] font-bold text-xs flex items-center gap-1.5" title="Gestionar grupo">
+            <lucide-icon [img]="Crown" class="w-4 h-4"></lucide-icon> Gestionar
+          </button>
+        }
+        <button (click)="iniciarVideollamada()" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-[#fdc003] font-bold text-xs flex items-center gap-1.5" title="Iniciar Videollamada 1 a 1">
+          <lucide-icon [img]="Video" class="w-4 h-4"></lucide-icon> Llamada
+        </button>
+        <button (click)="cerrarChat()" class="p-2 hover:bg-white/10 rounded-full transition-colors">
+          <lucide-icon [img]="X" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Messages Body -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+      @for (msg of mensajesGrupo(); track msg.id) {
+        <div class="flex flex-col max-w-[80%]" [class.self-end]="msg.usuario_id === user()?.id" [class.items-end]="msg.usuario_id === user()?.id">
+          <span class="text-xs text-gray-500 font-semibold mb-1 px-1">{{ msg.autor_nombre || msg.usuario_nombre || msg.nombre_usuario || 'Usuario' }}</span>
+          
+          <div class="p-3.5 rounded-2xl shadow-sm border text-sm"
+            [class.bg-[var(--primary)]]="msg.usuario_id === user()?.id"
+            [class.text-white]="msg.usuario_id === user()?.id"
+            [class.rounded-tr-none]="msg.usuario_id === user()?.id"
+            [class.bg-white]="msg.usuario_id !== user()?.id"
+            [class.text-gray-900]="msg.usuario_id !== user()?.id"
+            [class.rounded-tl-none]="msg.usuario_id !== user()?.id">
+            
+            <!-- Stickers/URLs -->
+            @if (msg.contenido && (msg.contenido.startsWith('http://') || msg.contenido.startsWith('https://') || msg.contenido.startsWith('data:image/'))) {
+              <img [src]="msg.contenido" class="rounded-xl mt-1 max-w-xs h-40 object-cover shadow-sm border" alt="Sticker CatAPI">
+            } @else if (msg.contenido && msg.contenido.toLowerCase() !== 'foto' && msg.contenido.toLowerCase() !== 'imagen' && msg.contenido.toLowerCase() !== 'video') {
+              <p class="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word]">{{ msg.contenido }}</p>
+            }
+            
+            <!-- Imágenes o Videos -->
+            @if (msg.imagen_url && !msg.contenido?.startsWith('http')) {
+              @if (msg.imagen_url.startsWith('data:video/') || msg.imagen_url.includes('.mp4') || msg.imagen_url.includes('.webm') || msg.imagen_url.includes('.mov')) {
+                <video [src]="msg.imagen_url | mediaUrl" controls class="rounded-xl mt-1 max-w-xs max-h-48 object-cover shadow-sm border"></video>
+              } @else {
+                <img [src]="msg.imagen_url | mediaUrl" class="rounded-xl mt-1 max-w-xs h-40 object-cover shadow-sm border" alt="Imagen enviada">
+              }
+            }
+
+            @if (msg.isEditing) {
+              <div class="mt-2 flex gap-2">
+                <input type="text" [(ngModel)]="msg.editContent" class="flex-1 text-sm rounded-lg border-gray-300 p-1 text-gray-900" (keyup.enter)="guardarEdicionMensaje(msg)">
+                <button (click)="guardarEdicionMensaje(msg)" class="text-xs bg-white text-[var(--primary)] px-2 py-1 rounded-lg font-bold">Guardar</button>
+                <button (click)="msg.isEditing = false" class="text-xs text-gray-500 hover:text-gray-700">Cancelar</button>
+              </div>
+            }
+          </div>
+          
+          <div class="flex items-center gap-2 mt-1" [class.flex-row-reverse]="msg.usuario_id === user()?.id">
+            <span class="text-[10px] opacity-60 px-1">{{ msg.created_at || msg.fecha_creacion | date:'shortTime' }}</span>
+            
+            <button (click)="reaccionarMensaje(msg)" class="flex items-center gap-1 text-[11px] bg-white border shadow-sm px-1.5 py-0.5 rounded-full hover:bg-gray-50 transition-colors" [class.text-[var(--primary)]]="msg.liked_by_me" [class.border-[var(--primary)]]="msg.liked_by_me">
+              <lucide-icon [img]="Heart" class="w-3 h-3" [class.fill-current]="msg.liked_by_me"></lucide-icon> {{ msg.likes_count || 0 }}
+            </button>
+            
+            @if (puedeEditarMensaje(msg) && !msg.isEditing) {
+              <button (click)="iniciarEdicionMensaje(msg)" class="text-[10px] opacity-50 hover:opacity-100 hover:text-[var(--primary)] transition-colors p-1" title="Editar (dentro de los primeros 5 minutos)">
+                <lucide-icon [img]="Pencil" class="w-3 h-3"></lucide-icon>
+              </button>
+            }
+            @if (puedeEliminarMensaje(msg)) {
+              <button (click)="eliminarMensajeGrupo(msg)" class="text-[10px] opacity-50 hover:opacity-100 hover:text-[var(--error)] transition-colors p-1" title="Eliminar para todos">
+                <lucide-icon [img]="Trash2" class="w-3 h-3"></lucide-icon>
+              </button>
+            }
+            <button (click)="ocultarMensajeParaMi(msg)" class="text-[10px] opacity-50 hover:opacity-100 hover:text-[var(--primary)] transition-colors p-1" title="Eliminar solo para mí">
+              <lucide-icon [img]="X" class="w-3 h-3"></lucide-icon>
+            </button>
+            @if (msg.usuario_id !== user()?.id) {
+              <button (click)="denunciarMensajeGrupo(msg)" class="text-[10px] opacity-50 hover:opacity-100 hover:text-[#8a6a00] transition-colors p-1" title="Denunciar">
+                <lucide-icon [img]="AlertCircle" class="w-3 h-3"></lucide-icon>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-3 bg-white border-t relative">
+      <!-- Recording Video Indicator Banner -->
+      @if (isRecordingVideo()) {
+        <div class="bg-gradient-to-r from-[var(--error)] to-[var(--error)] text-white px-4 py-3 rounded-2xl mb-3 flex items-center justify-between shadow-lg animate-pulse z-30">
+          <div class="flex items-center gap-3">
+            <span class="w-3.5 h-3.5 bg-white rounded-full animate-ping"></span>
+            <div>
+              <span class="font-bold text-xs block">GRABANDO VIDEO CORTO...</span>
+              <span class="text-[11px] opacity-90">Tiempo restante: {{ videoSecondsLeft() }} segundos (máx 30s)</span>
+            </div>
+          </div>
+          <button (click)="detenerGrabacionVideo()" class="bg-white text-[var(--error)] hover:bg-gray-100 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-transform active:scale-95 shadow">
+            Detener y Enviar Video
+          </button>
+        </div>
+      }
+
+      @if (mostrarEmojis()) {
+        <div class="absolute bottom-full left-4 mb-2 bg-white rounded-xl shadow-lg border p-2 w-64 max-h-48 overflow-y-auto grid grid-cols-8 gap-1 z-10">
+          @for (emoji of emojis; track $index) {
+            <button class="hover:bg-gray-100 p-1 rounded text-lg transition-transform hover:scale-125" (click)="agregarEmoji(emoji)">{{ emoji }}</button>
+          }
+        </div>
+      }
+      
+      @if (mostrarStickers()) {
+        <div class="absolute bottom-full left-14 mb-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 w-64 max-h-56 overflow-y-auto grid grid-cols-3 gap-2 z-20">
+          @for (stickerUrl of catStickers(); track $index) {
+            <button class="hover:bg-gray-100 rounded-xl overflow-hidden aspect-square border border-gray-100 shadow-sm transition-transform hover:scale-105 active:scale-95" (click)="enviarCatSticker(stickerUrl)">
+              <img [src]="stickerUrl" alt="Cat Sticker" class="w-full h-full object-cover">
+            </button>
+          }
+        </div>
+      }
+
+      <div class="flex items-center gap-2">
+        <button class="p-2 text-gray-400 hover:text-[var(--primary)] transition-colors rounded-full hover:bg-gray-100 shrink-0" (click)="mostrarEmojis.set(!mostrarEmojis()); mostrarStickers.set(false)" title="Emojis">
+          <lucide-icon [img]="Smile" class="w-5 h-5"></lucide-icon>
+        </button>
+        
+        <button class="p-2 text-gray-400 hover:text-[var(--primary)] transition-colors rounded-full hover:bg-gray-100 shrink-0" (click)="toggleStickersPanel()" title="Stickers TheCatAPI">
+          <lucide-icon [img]="Sticker" class="w-5 h-5"></lucide-icon>
+        </button>
+        
+        <!-- Image Upload -->
+        <label class="p-2 text-gray-400 hover:text-[var(--primary)] transition-colors rounded-full hover:bg-gray-100 cursor-pointer shrink-0" title="Subir imagen">
+          <lucide-icon [img]="ImageIcon" class="w-5 h-5"></lucide-icon>
+          <input #fileInput type="file" class="hidden" accept="image/jpeg,image/png,image/webp" capture="environment" (change)="onImageSelected($event)">
+        </label>
+
+        <!-- Video Record Button (Max 30s) -->
+        <button (click)="isRecordingVideo() ? detenerGrabacionVideo() : iniciarGrabacionVideo()"
+          class="p-2 transition-colors rounded-full shrink-0 flex items-center gap-1 font-bold text-xs"
+          [class.bg-[var(--error-surface)]]="isRecordingVideo()"
+          [class.text-[var(--error)]]="isRecordingVideo()"
+          [class.text-gray-400]="!isRecordingVideo()"
+          [class.hover:text-[var(--error)]]="!isRecordingVideo()"
+          title="Grabar video corto (máx 30s)">
+          <lucide-icon [img]="Circle" class="w-5 h-5" [class.animate-pulse]="isRecordingVideo()"></lucide-icon>
+          @if (isRecordingVideo()) {
+            <span>{{ videoSecondsLeft() }}s</span>
+          }
+        </button>
+
+        <textarea [ngModel]="nuevoMensajeGrupo()" (ngModelChange)="nuevoMensajeGrupo.set($event)" class="form-input flex-1 min-h-[44px] max-h-[120px] py-2.5 px-4 rounded-xl resize-none text-sm" rows="1" placeholder="Escribe un mensaje..." (keydown.enter)="!$any($event).shiftKey && $event.preventDefault(); !$any($event).shiftKey && enviarMensajeGrupo()"></textarea>
+
+        <button class="btn btn-primary p-3 rounded-full shrink-0" (click)="enviarMensajeGrupo()" [disabled]="!nuevoMensajeGrupo().trim()">
+          <lucide-icon [img]="Send" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Videollamada WebRTC 1 a 1 -->
+    @if (enVideollamada()) {
+      <div class="absolute inset-0 bg-black/90 z-50 flex flex-col items-center justify-between p-6 animate-fade-in">
+        <div class="w-full flex items-center justify-between text-white">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 bg-[var(--error)] rounded-full animate-ping"></span>
+            <span class="font-bold text-sm font-serif">Videollamada en Vivo</span>
+          </div>
+          <span class="text-xs text-gray-300 font-mono">{{ grupoActivo().nombre }}</span>
+        </div>
+
+        <div class="relative w-full max-w-lg flex-1 my-4 flex items-center justify-center bg-gray-950 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+          <!-- Remote Video -->
+          <video #remoteVideo autoplay playsinline class="w-full h-full object-cover"></video>
+          
+          <!-- Local Video (Pip) -->
+          <div class="absolute bottom-4 right-4 w-32 h-44 bg-gray-900 rounded-2xl overflow-hidden border-2 border-white/20 shadow-lg">
+            <video #localVideo autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
+          <button (click)="toggleMic()" class="w-12 h-12 rounded-full flex items-center justify-center transition-all" [class.bg-white/20]="micActivo()" [class.text-white]="micActivo()" [class.bg-[var(--error)]]="!micActivo()" [class.text-white]="!micActivo()">
+            <lucide-icon [img]="micActivo() ? Mic : MicOff" class="w-5 h-5"></lucide-icon>
+          </button>
+
+          <button (click)="colgarVideollamada()" class="w-14 h-14 bg-[var(--error)] hover:bg-[var(--error)] rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+            <lucide-icon [img]="PhoneOff" class="w-6 h-6"></lucide-icon>
+          </button>
+
+          <button (click)="toggleCamara()" class="w-12 h-12 rounded-full flex items-center justify-center transition-all" [class.bg-white/20]="camaraActiva()" [class.text-white]="camaraActiva()" [class.bg-[var(--error)]]="!camaraActiva()" [class.text-white]="!camaraActiva()">
+            <lucide-icon [img]="camaraActiva() ? Video : VideoOff" class="w-5 h-5"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+} @else {
+  <!-- Grid de Grupos -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    @for (grupo of grupos(); track grupo.id) {
+      <div class="card p-6 flex flex-col transition-transform hover:-translate-y-1" [ngClass]="grupo.esMiembro ? 'cursor-pointer hover:border-[var(--primary)]/50 border-2 border-transparent' : ''" (click)="abrirChat(grupo)">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-12 h-12 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
+            <lucide-icon [img]="Hash" class="w-6 h-6"></lucide-icon>
+          </div>
+          @if (grupo.esMiembro) {
+            <span class="badge" [ngClass]="grupo.rol === 'ADMIN' ? 'badge-warning' : 'badge-success'">
+              @if (grupo.rol === 'ADMIN') { <lucide-icon [img]="Shield" class="w-3 h-3 mr-1"></lucide-icon> }
+              {{ grupo.rol === 'ADMIN' ? 'Administrador' : 'Miembro' }}
+            </span>
+          }
+        </div>
+        
+        <h3 class="font-bold text-[var(--primary)] text-lg mb-2">{{ grupo.nombre }}</h3>
+        <p class="text-[var(--on-surface-variant)] text-sm mb-6 flex-1">{{ grupo.descripcion }}</p>
+        
+        <div class="flex items-center justify-between border-t border-[var(--outline)]/10 pt-4 mt-auto">
+          <div class="flex items-center gap-1.5 text-[var(--on-surface-variant)] text-xs font-semibold">
+            <lucide-icon [img]="Users" class="w-4 h-4"></lucide-icon> {{ grupo.miembros }} miembros
+          </div>
+          
+          @if (!grupo.esMiembro) {
+            <button class="text-[var(--primary)] text-sm font-bold hover:underline" (click)="unirseGrupo(grupo); $event.stopPropagation()">Unirse</button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

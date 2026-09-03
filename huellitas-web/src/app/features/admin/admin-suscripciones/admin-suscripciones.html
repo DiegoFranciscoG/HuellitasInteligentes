@@ -1,0 +1,56 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+        <lucide-icon [img]="CreditCard" class="w-6 h-6 text-[var(--accent)]"></lucide-icon> Suscripciones Activas
+      </h1>
+      <p class="text-xs text-gray-500">Historial y registros en tiempo real directamente de la tabla suscripcion</p>
+    </div>
+    <button (click)="cargarSuscripciones()" class="btn btn-outline py-2 px-4 text-xs flex items-center gap-2">
+      <lucide-icon [img]="RefreshCw" class="w-4 h-4" [class.animate-spin]="isLoading()"></lucide-icon>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-8 text-center text-xs text-gray-400">Cargando registros de suscripción...</div>
+    } @else if (suscripciones().length === 0) {
+      <div class="p-12 text-center text-xs text-gray-400">No hay registros de suscripciones en la base de datos.</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100 text-[10px] uppercase font-bold text-gray-500 tracking-wider">
+              <th class="p-4">ID Suscripción</th>
+              <th class="p-4">Usuario</th>
+              <th class="p-4">Plan</th>
+              <th class="p-4">Estado</th>
+              <th class="p-4">Fecha Alta</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-xs">
+            @for (s of suscripciones(); track s.id) {
+              <tr class="hover:bg-gray-50/50">
+                <td class="p-4 font-mono font-bold text-gray-900">#{{ s.id }}</td>
+                <td class="p-4">
+                  <p class="font-bold text-gray-800">{{ s.usuario_nombre || 'Usuario' }}</p>
+                  <p class="text-[11px] text-gray-400">{{ s.usuario_email }}</p>
+                </td>
+                <td class="p-4 font-bold text-[var(--primary)] uppercase">{{ s.plan_nombre || 'FREE' }}</td>
+                <td class="p-4">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--primary-surface)] text-[var(--primary)]">
+                    {{ s.estado || 'ACTIVO' }}
+                  </span>
+                </td>
+                <td class="p-4 text-gray-500">{{ s.created_at | date:'short' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

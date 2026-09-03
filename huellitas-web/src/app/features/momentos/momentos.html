@@ -1,0 +1,101 @@
+<!-- Encabezado -->
+<div class="mb-8">
+  <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold flex items-center gap-2">
+    <lucide-icon [img]="PawPrint" class="w-7 h-7 text-[var(--accent)]"></lucide-icon> Momentos de tu Mascota
+  </h2>
+  <p class="text-[var(--on-surface-variant)] mt-1 text-sm">
+    Lo que tu cámara IoT detectó hace poco. Tienes 3 minutos para guardarlo antes de que se borre solo.
+  </p>
+</div>
+
+<!-- Momentos activos: cuenta regresiva -->
+@if (!cargandoActivos() && activos().length > 0) {
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+    @for (m of activos(); track m.id) {
+      <div class="bg-[var(--surface)] rounded-3xl border border-[var(--accent)]/40 overflow-hidden shadow-[0px_4px_20px_rgba(27,48,34,0.06)]">
+        <div class="relative aspect-video bg-[var(--primary)]/5">
+          @if (m.urlsFragmento.length > 0) {
+            <img [src]="m.urlsFragmento[0]" [alt]="textoActividad(m.actividad)" class="w-full h-full object-cover">
+          } @else {
+            <div class="w-full h-full flex items-center justify-center text-[var(--primary)]/30">
+              <lucide-icon [img]="ImageOff" class="w-10 h-10"></lucide-icon>
+            </div>
+          }
+          @if (m.urlsFragmento.length > 1) {
+            <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              {{ m.urlsFragmento.length }} fotos
+            </span>
+          }
+          <span class="absolute top-2 right-2 bg-[var(--accent)] text-[#4a3800] text-xs font-bold px-2.5 py-1 rounded-full font-mono tabular-nums flex items-center gap-1">
+            <lucide-icon [img]="Clock" class="w-3.5 h-3.5"></lucide-icon> {{ formatoCuenta(m.segundos_restantes) }}
+          </span>
+        </div>
+        <div class="p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <lucide-icon [img]="iconoActividad(m.actividad)" class="w-4 h-4 text-[var(--primary)]"></lucide-icon>
+            <h3 class="font-serif font-bold text-[var(--primary)]">
+              {{ m.perro_nombre || 'Tu mascota' }} · {{ textoActividad(m.actividad) }}
+            </h3>
+          </div>
+          <p class="text-xs text-[var(--on-surface-variant)] mb-3">
+            {{ m.camara_nombre }} · confianza {{ (m.confianza * 100) | number:'1.0-0' }}%
+          </p>
+          <button (click)="guardar(m)" [disabled]="guardando() === m.id"
+            class="btn btn-primary w-full py-2.5 rounded-2xl flex items-center justify-center gap-2 text-sm disabled:opacity-60">
+            @if (guardando() === m.id) {
+              <lucide-icon [img]="RefreshCw" class="w-4 h-4 animate-spin"></lucide-icon> Guardando...
+            } @else {
+              <lucide-icon [img]="Save" class="w-4 h-4"></lucide-icon> Guardar antes de que se borre
+            }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (!cargandoActivos() && activos().length === 0) {
+  <div class="bg-[var(--surface)] rounded-3xl border border-[var(--outline)]/20 p-8 flex items-center gap-4 mb-10">
+    <div class="w-14 h-14 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
+      <lucide-icon [img]="PawPrint" class="w-6 h-6"></lucide-icon>
+    </div>
+    <div>
+      <h3 class="font-serif text-lg font-bold text-[var(--primary)]">Nada pendiente ahora mismo</h3>
+      <p class="text-sm text-[var(--on-surface-variant)] mt-1">
+        En cuanto tu cámara IoT detecte a tu mascota, aparecerá aquí con tiempo para guardarlo.
+      </p>
+    </div>
+  </div>
+}
+
+<!-- Galería de momentos guardados -->
+<div class="flex items-center justify-between mb-4">
+  <h3 class="font-serif text-lg font-bold text-[var(--primary)]">Guardados</h3>
+  <button (click)="cargarGaleria()" class="text-xs font-bold text-[var(--primary)] flex items-center gap-1.5 hover:opacity-70">
+    <lucide-icon [img]="RefreshCw" class="w-3.5 h-3.5" [class.animate-spin]="cargandoGaleria()"></lucide-icon> Actualizar
+  </button>
+</div>
+
+@if (errorGaleria()) {
+  <p class="text-sm text-[var(--error)]">{{ errorGaleria() }}</p>
+} @else if (!cargandoGaleria() && galeria().length === 0) {
+  <p class="text-sm text-[var(--on-surface-variant)]">Todavía no has guardado ningún momento.</p>
+} @else {
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    @for (m of galeria(); track m.id) {
+      <div class="bg-[var(--surface)] rounded-2xl border border-[var(--outline)]/20 overflow-hidden">
+        <div class="aspect-square bg-[var(--primary)]/5">
+          @if (m.urlsFragmento.length > 0) {
+            <img [src]="m.urlsFragmento[0]" [alt]="textoActividad(m.actividad)" class="w-full h-full object-cover">
+          }
+        </div>
+        <div class="p-2.5">
+          <p class="text-xs font-bold text-[var(--primary)] truncate">
+            {{ m.perro_nombre || 'Tu mascota' }} · {{ textoActividad(m.actividad) }}
+          </p>
+          <p class="text-[10px] text-[var(--on-surface-variant)] mt-0.5">{{ m.capturado_at | date:'short' }}</p>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -1,0 +1,1 @@
+ALTER TABLE camara ADD COLUMN conectada BOOLEAN DEFAULT false;

@@ -1,0 +1,32 @@
+<div *ngIf="toastService.isVisible()" class="fixed top-4 right-4 z-[9999] w-80 animate-fade-slide-in">
+  <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-[var(--primary)]/20 relative">
+    
+    <!-- Top accent border -->
+    <div class="h-2 w-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)]"></div>
+    
+    <div class="p-4 flex gap-4">
+      <!-- Icon Container -->
+      <div class="flex-shrink-0 w-12 h-12 bg-[#FFFAED] rounded-xl border border-[var(--primary)]/20 flex items-center justify-center">
+        <lucide-icon *ngIf="toastService.currentMessage()?.icon" [img]="getIcon(toastService.currentMessage()?.icon!)" class="w-6 h-6 text-[var(--primary)]"></lucide-icon>
+      </div>
+      
+      <!-- Content -->
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-[#2D3748] mb-1">¡Tip Huellitas!</p>
+        <p class="text-sm text-[#4A5568] leading-snug">
+          {{ toastService.currentMessage()?.text }}
+        </p>
+      </div>
+
+      <!-- Close Button -->
+      <button (click)="close()" class="absolute top-4 right-4 text-[#A0AEC0] hover:text-[#2D3748] transition-colors rounded-lg hover:bg-gray-100 p-1">
+        <lucide-icon [img]="X" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+    
+    <!-- Progress bar for 20s -->
+    <div class="w-full h-1 bg-gray-100">
+      <div class="h-full bg-[var(--primary)] origin-left animate-toast-progress" style="animation-duration: 20s; animation-fill-mode: forwards; animation-timing-function: linear;"></div>
+    </div>
+  </div>
+</div>

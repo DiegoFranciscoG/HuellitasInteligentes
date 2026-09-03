@@ -1,0 +1,119 @@
+<div class="h-[calc(100vh-140px)] flex flex-col md:flex-row overflow-hidden rounded-3xl shadow-2xl font-inter bg-white border border-[var(--outline)]/20 animate-fade-slide-in">
+  
+  <!-- Sidebar -->
+  <div class="w-full md:w-80 bg-[#061b0e] p-6 flex flex-col items-center justify-center shrink-0 text-center relative overflow-hidden">
+    <!-- Decorative background elements -->
+    <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-xl"></div>
+    <div class="absolute bottom-0 left-0 w-40 h-40 bg-[#fdc003]/10 rounded-full -ml-16 -mb-16 blur-xl"></div>
+
+    <div class="w-24 h-24 bg-[#fdc003] rounded-full flex items-center justify-center mb-6 relative shadow-[0_0_20px_rgba(253,192,3,0.3)] z-10">
+      <lucide-icon [img]="Bot" class="w-12 h-12 text-[#061b0e]"></lucide-icon>
+      <div class="absolute -bottom-1 -right-1 bg-[var(--primary)] w-5 h-5 rounded-full border-4 border-[#061b0e]"></div>
+    </div>
+    
+    <h2 class="font-serif text-3xl text-white font-bold mb-2 z-10">Huellitas IA</h2>
+    
+    @if (mascotaActiva()) {
+      <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/5 mt-2 z-10">
+        <lucide-icon [img]="Sparkles" class="w-4 h-4 text-[#fdc003]"></lucide-icon>
+        <span class="text-white/90 text-sm">Asistiendo a <strong class="text-[#fdc003]">{{mascotaActiva().nombre}}</strong></span>
+      </div>
+    } @else {
+      <p class="text-white/60 text-sm z-10">Tu asistente experto en mascotas</p>
+    }
+  </div>
+
+  <!-- Chat container -->
+  <div class="flex-1 flex flex-col bg-white relative">
+    <!-- Mensajes -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-gray-50/50" #msgContainer>
+      @for (msg of mensajes(); track $index) {
+        <div class="flex flex-col animate-fade-slide-in" [class.items-end]="msg.role === 'user'">
+          <div class="flex gap-3 max-w-[85%]" [class.flex-row-reverse]="msg.role === 'user'">
+            
+            <!-- Avatar -->
+            <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center shadow-sm"
+              [class.bg-[#061b0e]]="msg.role === 'bot'"
+              [class.bg-[#fdc003]]="msg.role === 'user'">
+              @if (msg.role === 'bot') {
+                <lucide-icon [img]="Bot" class="w-4 h-4 text-[#fdc003]"></lucide-icon>
+              } @else {
+                <span class="text-xs font-bold text-[#061b0e]">
+                  {{ user()?.nombre?.[0]?.toUpperCase() || 'U' }}
+                </span>
+              }
+            </div>
+
+            <!-- Burbuja -->
+            <div class="px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap break-all [word-break:break-word] [overflow-wrap:anywhere] overflow-hidden max-w-full"
+              [innerHTML]="formatTexto(msg.texto)"
+              [class.bg-[#fdc003]]="msg.role === 'user'"
+              [class.text-[#061b0e]]="msg.role === 'user'"
+              [class.rounded-tr-sm]="msg.role === 'user'"
+              [class.font-medium]="msg.role === 'user'"
+              
+              [class.bg-white]="msg.role === 'bot'"
+              [class.border]="msg.role === 'bot'"
+              [class.border-gray-100]="msg.role === 'bot'"
+              [class.text-gray-800]="msg.role === 'bot'"
+              [class.rounded-tl-sm]="msg.role === 'bot'">
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1.5 px-11" [class.text-right]="msg.role === 'user'">
+            {{ msg.ts | date:'HH:mm' }}
+          </p>
+        </div>
+      }
+
+      <!-- Typing indicator -->
+      @if (isTyping()) {
+        <div class="flex gap-3 max-w-[85%] animate-fade-slide-in">
+          <div class="w-8 h-8 rounded-full bg-[#061b0e] flex items-center justify-center shadow-sm shrink-0">
+            <lucide-icon [img]="Bot" class="w-4 h-4 text-[#fdc003]"></lucide-icon>
+          </div>
+          <div class="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm">
+            <div class="flex gap-1.5 items-center h-4">
+              <span class="w-2 h-2 bg-[#061b0e]/30 rounded-full animate-bounce" style="animation-delay:0ms"></span>
+              <span class="w-2 h-2 bg-[#061b0e]/30 rounded-full animate-bounce" style="animation-delay:150ms"></span>
+              <span class="w-2 h-2 bg-[#061b0e]/30 rounded-full animate-bounce" style="animation-delay:300ms"></span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-4 bg-white border-t border-gray-100 flex flex-col gap-3 z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+      
+      <!-- Suggestion chips -->
+      <div class="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        @for (sug of sugerencias; track sug) {
+          <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:border-[#fdc003] hover:text-[#061b0e] hover:bg-[#fdc003]/10 transition-colors"
+                  (click)="enviar(sug)">
+            {{ sug }}
+          </button>
+        }
+      </div>
+
+      <form (ngSubmit)="enviar()" class="flex gap-2 items-center">
+        <input
+          type="text"
+          name="msg"
+          [ngModel]="input()"
+          (ngModelChange)="input.set($event)"
+          placeholder="Escribe tu consulta aquí..."
+          [disabled]="isTyping()"
+          autocomplete="off"
+          class="flex-1 bg-gray-50 border border-gray-200 focus:border-[#061b0e] focus:bg-white focus:ring-1 focus:ring-[#061b0e] rounded-xl px-5 py-3.5 text-[15px] outline-none transition-all placeholder:text-gray-400"
+        >
+        <button
+          type="submit"
+          [disabled]="!input().trim() || isTyping()"
+          class="bg-[#061b0e] text-white w-12 h-12 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity hover:bg-[#0a2c17]"
+        >
+          <lucide-icon [img]="Send" class="w-5 h-5"></lucide-icon>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

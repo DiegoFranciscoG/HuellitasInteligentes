@@ -1,0 +1,1 @@
+-- Archivo vacío para satisfacer la validación de Flyway de la migración V6 que fue eliminada.

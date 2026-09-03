@@ -1,0 +1,159 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+        <lucide-icon [img]="Cpu" class="w-6 h-6 text-[var(--primary)]"></lucide-icon> Monitoreo de Dispositivos IoT (Solo Lectura)
+      </h1>
+      <p class="text-xs text-gray-500">
+        Una vivienda por fila. Si todos sus dispositivos están conformes, queda colapsada; si alguno
+        nunca dio señal, lleva más de 24h sin dar señal, o quedó en error, se expande sola.
+      </p>
+    </div>
+    <button (click)="cargarDispositivos()" class="btn btn-outline py-2 px-4 text-xs flex items-center gap-2">
+      <lucide-icon [img]="RefreshCw" class="w-4 h-4" [class.animate-spin]="cargando()"></lucide-icon>
+      Actualizar
+    </button>
+  </div>
+
+  @if (!cargando() && casas().length > 0) {
+    <div class="flex items-center gap-2 text-xs font-medium"
+      [class.text-red-700]="totalConProblema() > 0"
+      [class.text-green-700]="totalConProblema() === 0">
+      <lucide-icon [img]="totalConProblema() > 0 ? AlertTriangle : CheckCircle2" class="w-4 h-4"></lucide-icon>
+      @if (totalConProblema() > 0) {
+        {{ totalConProblema() }} de {{ casas().length }} viviendas tienen algo que revisar.
+      } @else {
+        Las {{ casas().length }} viviendas con IoT están conformes.
+      }
+    </div>
+  }
+
+  <!-- Devices list -->
+  <div class="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+    @if (cargando()) {
+      <div class="p-8 text-center text-xs text-gray-400">Cargando monitoreo de hardware...</div>
+    } @else if (casas().length === 0) {
+      <div class="p-12 text-center text-xs text-gray-400">No hay dispositivos IoT registrados en la plataforma.</div>
+    } @else {
+      <div class="divide-y divide-gray-100">
+        @for (casa of casas(); track casa.casaId) {
+          <details [open]="!casa.conforme" class="group">
+            <summary class="p-4 flex items-center justify-between cursor-pointer list-none hover:bg-gray-50/50">
+              <div class="flex items-center gap-3 min-w-0">
+                <lucide-icon [img]="casa.conforme ? CheckCircle2 : AlertTriangle"
+                  class="w-5 h-5 shrink-0" [class.text-green-600]="casa.conforme" [class.text-red-600]="!casa.conforme">
+                </lucide-icon>
+                <div class="min-w-0">
+                  <p class="font-bold text-gray-900 text-sm truncate">{{ casa.casaNombre }}</p>
+                  <p class="text-[11px] text-gray-500 truncate">{{ casa.propietario }} · {{ casa.dispositivos.length }} dispositivo(s)</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0"
+                [class]="casa.conforme ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+                {{ casa.conforme ? 'Usuario conforme' : 'Revisar' }}
+              </span>
+            </summary>
+
+            <div class="overflow-x-auto border-t border-gray-100">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 text-[10px] uppercase font-bold text-gray-500 tracking-wider">
+                    <th class="p-3 pl-14">Dispositivo</th>
+                    <th class="p-3">Código / MAC</th>
+                    <th class="p-3">Zona</th>
+                    <th class="p-3">Última señal</th>
+                    <th class="p-3">Estado</th>
+                    <th class="p-3"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-xs">
+                  @for (d of casa.dispositivos; track d.id) {
+                    <tr class="hover:bg-gray-50/50" [class.bg-red-50]="d.problema">
+                      <td class="p-3 pl-14 font-bold text-gray-900 flex items-center gap-2">
+                        <lucide-icon [img]="Server" class="w-4 h-4 text-[var(--primary)]"></lucide-icon>
+                        {{ d.modelo || d.categoria }}
+                      </td>
+                      <td class="p-3 font-mono text-[11px] text-gray-500">{{ d.mac_address }}</td>
+                      <td class="p-3 text-gray-600">{{ d.zona_nombre }}</td>
+                      <td class="p-3 text-gray-600">
+                        {{ d.ultima_conexion ? (d.ultima_conexion | date:'d MMM, HH:mm') : 'Nunca' }}
+                      </td>
+                      <td class="p-3">
+                        @if (d.problema) {
+                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700 flex items-center gap-1 w-fit">
+                            <lucide-icon [img]="AlertTriangle" class="w-3 h-3"></lucide-icon> {{ d.problema }}
+                          </span>
+                        } @else {
+                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit"
+                            [class]="d.en_linea ? 'bg-[var(--primary-surface)] text-[var(--primary)]' : 'bg-gray-100 text-gray-500'">
+                            <lucide-icon [img]="d.en_linea ? Wifi : WifiOff" class="w-3 h-3"></lucide-icon>
+                            {{ d.en_linea ? 'En línea ahora' : 'Sin conexión ahora' }}
+                          </span>
+                        }
+                      </td>
+                      <td class="p-3">
+                        @if (d.problema) {
+                          <button (click)="abrirAvisoParaDispositivo(d)"
+                            class="text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] hover:opacity-70 transition-opacity flex items-center gap-1 whitespace-nowrap">
+                            <lucide-icon [img]="MessageCircleWarning" class="w-3.5 h-3.5"></lucide-icon> Avisar
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </details>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Modal: Avisar a este usuario -->
+  @if (dispositivoAAvisar(); as d) {
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="cerrarModalAviso()">
+      <div class="bg-white rounded-[2rem] shadow-[0px_10px_30px_rgba(27,48,34,0.08)] max-w-md w-full p-6" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-serif font-semibold text-lg text-[var(--primary)] flex items-center gap-2">
+            <lucide-icon [img]="MessageCircleWarning" class="w-5 h-5 text-[var(--accent)]"></lucide-icon> Avisar a este usuario
+          </h3>
+          <button (click)="cerrarModalAviso()" class="text-gray-400 hover:text-[var(--primary)]">
+            <lucide-icon [img]="X" class="w-5 h-5"></lucide-icon>
+          </button>
+        </div>
+
+        <p class="text-xs text-[var(--on-surface-variant)] mb-1">Dispositivo: <strong class="text-[var(--primary)]">{{ d.modelo || d.categoria }}</strong></p>
+        <p class="text-xs text-[var(--on-surface-variant)] mb-4">Propietario: <strong class="text-[var(--primary)]">{{ d.propietario_nombre || d.propietario_email }}</strong></p>
+
+        <textarea
+          [ngModel]="mensajeAviso()" (ngModelChange)="mensajeAviso.set($event)"
+          rows="5"
+          class="w-full p-3 rounded-2xl border border-[var(--outline)]/30 text-sm text-[var(--on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 resize-none"
+          placeholder="Escribe qué debe revisar el usuario..."
+        ></textarea>
+
+        @if (avisoResultado() === 'ok') {
+          <p class="text-xs font-bold text-[var(--primary)] mt-2">Mensaje enviado.</p>
+        }
+        @if (avisoResultado() === 'error') {
+          <p class="text-xs font-bold text-[var(--error)] mt-2">No se pudo enviar. Inténtalo de nuevo.</p>
+        }
+
+        <div class="flex justify-end gap-2 mt-4">
+          <button (click)="cerrarModalAviso()" class="btn btn-outline text-xs px-4 py-2">Cancelar</button>
+          <button (click)="enviarAviso()" [disabled]="enviandoAviso() || !mensajeAviso().trim()"
+            class="btn btn-primary text-xs px-4 py-2 flex items-center gap-2 disabled:opacity-50">
+            @if (enviandoAviso()) {
+              <span class="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin"></span>
+            } @else {
+              <lucide-icon [img]="Send" class="w-3.5 h-3.5"></lucide-icon>
+            }
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

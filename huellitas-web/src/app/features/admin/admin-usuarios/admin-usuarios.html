@@ -1,0 +1,159 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+        <lucide-icon [img]="Users" class="w-6 h-6 text-[var(--primary)]"></lucide-icon> Actividad de Usuarios
+      </h1>
+      <p class="text-xs text-gray-500">Supervisión de cuentas, historial de compras, publicaciones y sanciones (Total: <strong class="text-[var(--primary)] font-bold">{{ usuarios().length }} usuarios</strong>)</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="relative flex-1 sm:w-64">
+        <lucide-icon [img]="Search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></lucide-icon>
+        <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" type="text" class="form-input text-xs pl-9 py-2 rounded-xl border border-gray-200 w-full" placeholder="Buscar por nombre o correo...">
+      </div>
+      <button (click)="cargarUsuarios()" class="btn btn-outline py-2 px-3 text-xs flex items-center gap-1">
+        <lucide-icon [img]="RefreshCw" class="w-4 h-4" [class.animate-spin]="isLoading()"></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-8 text-center text-xs text-gray-400">Cargando lista de usuarios...</div>
+    } @else if (usuariosFiltrados.length === 0) {
+      <div class="p-12 text-center text-xs text-gray-400">No se encontraron usuarios en la búsqueda.</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100 text-[10px] uppercase font-bold text-gray-500 tracking-wider">
+              <th class="p-4">Usuario</th>
+              <th class="p-4">Correo Electrónico</th>
+              <th class="p-4">Rol</th>
+              <th class="p-4">Estado Cuenta</th>
+              <th class="p-4">Strikes Recibidos</th>
+              <th class="p-4 text-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-xs">
+            @for (u of usuariosFiltrados; track u.id) {
+              <tr class="hover:bg-gray-50/50 transition-colors">
+                <td class="p-4 font-bold text-gray-900">{{ u.nombre }}</td>
+                <td class="p-4 text-gray-600 font-medium">{{ u.email }}</td>
+                <td class="p-4">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                        [class.bg-[var(--primary-surface)]]="u.rol === 'ADMIN' || u.rol === 'ADMINISTRADOR'"
+                        [class.text-[var(--primary)]]="u.rol === 'ADMIN' || u.rol === 'ADMINISTRADOR'"
+                        [class.bg-[var(--primary-surface)]]="u.rol === 'PROPIETARIO'"
+                        [class.text-[var(--primary)]]="u.rol === 'PROPIETARIO'"
+                        [class.bg-gray-100]="u.rol === 'MIEMBRO'"
+                        [class.text-gray-700]="u.rol === 'MIEMBRO'">
+                    {{ u.rol || 'PROPIETARIO' }}
+                  </span>
+                </td>
+                <td class="p-4">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                        [class.bg-[var(--primary-surface)]]="u.activo"
+                        [class.text-[var(--primary)]]="u.activo"
+                        [class.bg-[var(--error-surface)]]="!u.activo"
+                        [class.text-[var(--error)]]="!u.activo">
+                    {{ u.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="p-4 font-bold" [class.text-[var(--error)]]="u.strikes > 0" [class.text-gray-400]="!u.strikes">
+                  {{ u.strikes || 0 }} / 3
+                </td>
+                <td class="p-4 text-right">
+                  <button (click)="verActividadUsuario(u)" class="btn btn-outline py-1.5 px-3 text-xs font-bold rounded-xl flex items-center gap-1.5 ml-auto">
+                    <lucide-icon [img]="Eye" class="w-3.5 h-3.5 text-[var(--primary)]"></lucide-icon> Ver Actividad
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- User Activity Modal / Drawer -->
+  @if (usuarioDetalle()) {
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-[32px] p-6 max-w-2xl w-full shadow-2xl border border-gray-100 space-y-4 max-h-[85vh] overflow-y-auto animate-fade-slide-in">
+        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+          <div>
+            <h3 class="font-serif font-bold text-lg text-[var(--primary)] flex items-center gap-2">
+              <lucide-icon [img]="Users" class="w-5 h-5 text-[var(--primary)]"></lucide-icon> {{ usuarioDetalle()?.nombre }}
+            </h3>
+            <p class="text-xs text-gray-500">{{ usuarioDetalle()?.email }} • ID: #{{ usuarioDetalle()?.id }}</p>
+          </div>
+          <button (click)="cerrarDetalle()" class="text-gray-400 hover:text-gray-600 text-xs font-bold">Cerrar</button>
+        </div>
+
+        @if (cargandoActividad()) {
+          <div class="text-center py-8 text-xs text-gray-400">Cargando actividad del usuario...</div>
+        } @else {
+          <!-- Suscripciones -->
+          <div class="space-y-2">
+            <h4 class="font-bold text-xs text-gray-700 uppercase tracking-wider flex items-center gap-1">
+              <lucide-icon [img]="CreditCard" class="w-3.5 h-3.5 text-[var(--accent)]"></lucide-icon> Suscripciones / Planes Asignados
+            </h4>
+            <div class="space-y-1.5">
+              @if (actividadSuscripciones().length === 0) {
+                <div class="p-3 bg-gray-50 rounded-xl text-xs text-gray-400">Sin historial de suscripciones registradas.</div>
+              }
+              @for (s of actividadSuscripciones(); track s.id) {
+                <div class="p-3 bg-gray-50 rounded-xl text-xs flex justify-between items-center border border-gray-100">
+                  <span class="font-bold text-[var(--primary)] uppercase">{{ s.plan_nombre }}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--primary-surface)] text-[var(--primary)]">{{ s.estado }}</span>
+                  <span class="text-gray-400 text-[10px]">{{ s.created_at | date:'shortDate' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Moderación & Strikes -->
+          <div class="space-y-2 pt-3 border-t border-gray-100">
+            <h4 class="font-bold text-xs text-gray-700 uppercase tracking-wider flex items-center gap-1">
+              <lucide-icon [img]="ShieldAlert" class="w-3.5 h-3.5 text-[var(--error)]"></lucide-icon> Histórico de Moderación & Sanciones (Solo Lectura)
+            </h4>
+            <div class="space-y-1.5">
+              @if (actividadResoluciones().length === 0) {
+                <div class="p-3 bg-[var(--primary-surface)] text-[var(--primary)] rounded-xl text-xs font-medium">El usuario no registra sanciones ni denuncias en su contra.</div>
+              }
+              @for (res of actividadResoluciones(); track $index) {
+                <div class="p-3 bg-[rgba(186,26,26,0.6)] rounded-xl text-xs border border-[var(--error)] space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-white uppercase">Decisión: {{ res.decision }}</span>
+                    <span class="text-[10px] text-gray-400">{{ res.fecha_resolucion | date:'short' }}</span>
+                  </div>
+                  <p class="text-gray-700 font-medium">"{{ res.comentario_admin }}"</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Publicaciones -->
+          <div class="space-y-2 pt-3 border-t border-gray-100">
+            <h4 class="font-bold text-xs text-gray-700 uppercase tracking-wider flex items-center gap-1">
+              <lucide-icon [img]="MessageSquare" class="w-3.5 h-3.5 text-[var(--primary)]"></lucide-icon> Publicaciones en Comunidad (Últimas 10)
+            </h4>
+            <div class="space-y-1.5 max-h-40 overflow-y-auto">
+              @if (actividadPublicaciones().length === 0) {
+                <div class="p-3 bg-gray-50 rounded-xl text-xs text-gray-400">Sin publicaciones registradas.</div>
+              }
+              @for (pub of actividadPublicaciones(); track pub.id) {
+                <div class="p-2.5 bg-gray-50 rounded-xl text-xs border border-gray-100 flex justify-between items-center">
+                  <p class="text-gray-800 font-medium truncate flex-1 mr-2">"{{ pub.contenido }}"</p>
+                  <span class="text-[10px] text-gray-400 shrink-0">{{ pub.created_at | date:'shortDate' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

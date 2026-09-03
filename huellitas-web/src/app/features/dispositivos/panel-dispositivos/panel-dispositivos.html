@@ -1,0 +1,422 @@
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <div>
+    <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Panel IoT de la Casa</h2>
+    <p class="text-[var(--on-surface-variant)] mt-2">Monitorea y controla tu infraestructura inteligente.</p>
+  </div>
+  
+  @if (deviceState()) {
+    <div class="card p-3 flex items-center gap-4 animate-fade-slide-in">
+      <div class="flex flex-col">
+        <span class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Control Global</span>
+        <span class="font-bold text-[var(--primary)] text-sm">Modo Automático</span>
+      </div>
+      <button 
+        (click)="toggleAutomaticMode()"
+        class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none"
+        [class.bg-[var(--primary)]]="deviceState()?.automaticMode"
+        [class.bg-gray-300]="!deviceState()?.automaticMode"
+        [disabled]="controlesBloqueados() || actionLoading()['autoMode']">
+        <span
+          class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform"
+          [class.translate-x-6]="deviceState()?.automaticMode"
+          [class.translate-x-1]="!deviceState()?.automaticMode">
+        </span>
+        @if (actionLoading()['autoMode']) {
+          <span class="absolute inset-0 flex items-center justify-center">
+            <span class="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></span>
+          </span>
+        }
+      </button>
+    </div>
+  }
+</div>
+
+@if (reconectando()) {
+  <div class="mb-6 flex items-center gap-3 rounded-2xl border border-[var(--error)]/25 bg-[var(--error-surface)]/40 px-4 py-3 animate-fade-slide-in">
+    <span class="w-4 h-4 border-2 border-[var(--error)]/40 border-t-[var(--error)] rounded-full animate-spin shrink-0"></span>
+    <p class="text-sm text-[var(--on-surface-variant)]">Reconectando con los dispositivos de la casa…</p>
+  </div>
+}
+
+@if (isLoading()) {
+  <div class="flex items-center justify-center h-64">
+    <div class="text-center">
+      <div class="w-12 h-12 border-4 border-[var(--outline)]/30 border-t-[var(--primary)] rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-sm text-[var(--on-surface-variant)]">Conectando con dispositivos IoT...</p>
+    </div>
+  </div>
+} @else if (errorMessage()) {
+  <div class="card p-8 flex flex-col items-center justify-center text-center animate-fade-slide-in">
+    <div class="w-16 h-16 bg-[var(--error-surface)] rounded-full flex items-center justify-center mb-4">
+      <lucide-icon [img]="Zap" class="w-8 h-8 text-[var(--error)]"></lucide-icon>
+    </div>
+    <h3 class="font-serif text-xl font-bold text-[var(--primary)] mb-2">Fallo de Conexión</h3>
+    <p class="text-[var(--on-surface-variant)] text-sm max-w-md">{{ errorMessage() }}</p>
+    <button class="btn btn-primary mt-6" (click)="loadDevices()">Reintentar Conexión</button>
+  </div>
+} @else if (deviceState(); as state) {
+
+  <!-- Sin IoT vinculado: no hay nada que controlar todavía. -->
+  @if (situacion() === 'SIN_IOT') {
+    <div class="card p-8 mb-6 flex flex-col items-center justify-center text-center animate-fade-slide-in border border-[var(--outline)]/20">
+      <div class="w-16 h-16 rounded-full bg-[var(--primary)]/10 flex items-center justify-center mb-4">
+        <lucide-icon [img]="Cpu" class="w-8 h-8 text-[var(--primary)]"></lucide-icon>
+      </div>
+      <h3 class="font-serif text-xl font-bold text-[var(--primary)] mb-2">Todavía no tienes un IoT</h3>
+      <p class="text-[var(--on-surface-variant)] text-sm max-w-md">
+        Conecta tu ESP32 a la misma red y agrégalo a tu cuenta. Hasta entonces los controles
+        físicos quedan bloqueados, porque no hay ningún aparato al que mandarlos.
+      </p>
+      <a routerLink="/camaras" class="btn btn-primary mt-6">Agregar IoT</a>
+    </div>
+  }
+
+  <!-- Vinculado pero sin dar señal. -->
+  @if (situacion() === 'DESCONECTADO') {
+    <div class="card p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 animate-fade-slide-in border border-[var(--error)]/25 bg-[var(--error-surface)]/40">
+      <div class="w-12 h-12 rounded-full bg-[var(--error-surface)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Zap" class="w-6 h-6 text-[var(--error)]"></lucide-icon>
+      </div>
+      <div class="min-w-0 flex-1">
+        <h3 class="font-bold text-[var(--primary)]">Tu IoT está desconectado</h3>
+        <p class="text-[var(--on-surface-variant)] text-sm">
+          Los {{ estadoIot()?.total }} aparatos de tu vivienda llevan más de
+          {{ estadoIot()?.ventanaSegundos }} segundos sin dar señal. Comprueba que el ESP32
+          esté encendido y conectado al WiFi.
+        </p>
+      </div>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 stagger-cards"
+    [class.opacity-60]="controlesBloqueados()"
+    [class.pointer-events-none]="controlesBloqueados()">
+
+    <!-- SALA / HABITACIÓN 1 -->
+    <div class="card p-6 border border-[var(--outline)]/20 shadow-sm">
+      <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[var(--outline)]/10">
+        <div class="w-10 h-10 rounded-xl bg-[rgba(253,192,3,0.15)] flex items-center justify-center text-[#8a6a00]">
+          <lucide-icon [img]="Lightbulb" class="w-5 h-5"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="font-serif font-bold text-xl text-[var(--primary)]">Zona de Confort (Habitación 1)</h3>
+          <p class="text-xs text-[var(--on-surface-variant)]">Sensores climáticos y luz ambiental</p>
+        </div>
+      </div>
+
+      <!-- Sensores Room 1 -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Thermometer" class="w-8 h-8 text-[var(--accent)] opacity-80"></lucide-icon>
+          <div>
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Temperatura</p>
+            <p class="font-bold text-lg text-[var(--primary)]">{{ state.dht.temperature1 }}°C</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Droplets" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div>
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Humedad</p>
+            <p class="font-bold text-lg text-[var(--primary)]">{{ state.dht.humidity1 }}%</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Wind" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div>
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Calidad Aire</p>
+            <p class="font-bold text-lg" [style.color]="colorAire(state.mq135.airQuality1)">{{ state.mq135.airQuality1 }}</p>
+            <p class="text-[11px] text-[var(--on-surface-variant)]">{{ estadoAire(state.mq135.airQuality1) }}</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Activity" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div>
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Movimiento</p>
+            <p class="font-bold text-sm text-[var(--primary)]">{{ state.motion.room1Entry ? 'Detectado' : 'Despejado' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actuadores Room 1 -->
+      <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--on-surface-variant)] mb-3">Control Manual</h4>
+      <div class="flex flex-col gap-3">
+        <!-- Luz -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="Lightbulb" class="w-5 h-5 text-[var(--accent)]"></lucide-icon>
+            <span class="font-semibold text-sm">Luz Principal</span>
+          </div>
+          <button 
+            class="btn px-4 py-1.5 text-xs flex items-center gap-2 w-24 justify-center"
+            [class.btn-primary]="state.led.room1Led"
+            [class.btn-outline]="!state.led.room1Led"
+            [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['led1']"
+            (click)="toggleLed(1)">
+            @if (actionLoading()['led1']) {
+              <span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              {{ state.led.room1Led ? 'Encendido' : 'Apagado' }}
+            }
+          </button>
+        </div>
+        <!-- Ventilador -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="Wind" class="w-5 h-5 text-[var(--primary)]"></lucide-icon>
+            <span class="font-semibold text-sm">Ventilador</span>
+          </div>
+          <button 
+            class="btn px-4 py-1.5 text-xs flex items-center gap-2 w-24 justify-center"
+            [class.btn-primary]="state.fan.fan1"
+            [class.btn-outline]="!state.fan.fan1"
+            [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['fan1']"
+            (click)="toggleFan(1)">
+            @if (actionLoading()['fan1']) {
+              <span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              {{ state.fan.fan1 ? 'Encendido' : 'Apagado' }}
+            }
+          </button>
+        </div>
+        <!-- ⭐ VENTANA HABITACIÓN 1 (CORREGIDA) -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="DoorOpen" class="w-5 h-5 text-stone-600"></lucide-icon>
+            <div>
+              <span class="font-semibold text-sm block">Ventana Habitación 1</span>
+              <span class="text-xs text-stone-500">{{ state.servo.angle ?? 0 }}°</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              class="btn btn-outline px-3 py-1.5 text-xs w-20 flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo1'] || (state.servo.angle ?? 0) >= 180"
+              (click)="setServo(1, 180)">
+              Abrir
+            </button>
+            <button 
+              class="btn btn-primary px-3 py-1.5 text-xs w-20 flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo1'] || (state.servo.angle ?? 0) <= 0"
+              (click)="setServo(1, 0)">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ZONA DE ALIMENTACIÓN / HABITACIÓN 2 -->
+    <div class="card p-6 border border-[var(--outline)]/20 shadow-sm">
+      <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[var(--outline)]/10">
+        <div class="w-10 h-10 rounded-xl bg-[var(--primary-surface)] flex items-center justify-center text-[var(--primary)]">
+          <lucide-icon [img]="Beaker" class="w-5 h-5"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="font-serif font-bold text-xl text-[var(--primary)]">Zona de Alimentación (Hab. 2)</h3>
+          <p class="text-xs text-[var(--on-surface-variant)]">Control de comida y agua</p>
+        </div>
+      </div>
+
+      <!-- Sensores Room 2 -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Droplets" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Nivel de Agua</p>
+            <p class="font-bold text-lg text-[var(--primary)]">{{ porcentajeAgua() }}%</p>
+            <p class="text-[11px] text-[var(--on-surface-variant)]">{{ estadoAgua() }}</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Activity" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Nivel Comida</p>
+            <p class="font-bold text-lg text-[var(--primary)]">{{ porcentajeComida() }}%</p>
+            <p class="text-[11px] text-[var(--on-surface-variant)]">{{ estadoComida() }} · {{ state.ultrasonic.distance }} cm</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Thermometer" class="w-8 h-8 text-[var(--accent)] opacity-80"></lucide-icon>
+          <div>
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Temperatura</p>
+            <p class="font-bold text-lg text-[var(--primary)]">{{ state.dht.temperature2 }}°C</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Droplets" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div>
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Humedad</p>
+            <p class="font-bold text-lg text-[var(--primary)]">{{ state.dht.humidity2 }}%</p>
+          </div>
+        </div>
+        <div class="bg-[var(--surface)] p-3 rounded-xl border border-[var(--outline)]/10 flex items-center gap-3">
+          <lucide-icon [img]="Wind" class="w-8 h-8 text-[var(--primary)] opacity-80"></lucide-icon>
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">Calidad Aire</p>
+            <p class="font-bold text-lg" [style.color]="colorAire(state.mq135.airQuality2)">{{ state.mq135.airQuality2 }}</p>
+            <p class="text-[11px] text-[var(--on-surface-variant)]">{{ estadoAire(state.mq135.airQuality2) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispensador de alimento -->
+      <div class="mb-6 p-4 rounded-xl bg-[var(--surface)] border border-[var(--outline)]/10">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--on-surface-variant)]">Dispensador de Alimento</h4>
+          <span class="text-[11px] font-semibold"
+            [style.color]="dispensadorActivo() ? 'var(--primary)' : 'var(--on-surface-variant)'">
+            {{ dispensadorActivo() ? 'Dispensando' : 'En reposo' }}
+          </span>
+        </div>
+
+        <div class="w-full h-2 rounded-full bg-black/10 overflow-hidden mb-3">
+          <div class="h-full bg-[var(--primary)] transition-[width] duration-300"
+            [style.width.%]="(state.stepper.position / maximoDispensador()) * 100"></div>
+        </div>
+
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-xs text-[var(--on-surface-variant)] tabular-nums">
+            Posición {{ state.stepper.position }} / {{ maximoDispensador() }}
+          </span>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-primary px-3 py-1.5 text-xs w-24 flex items-center justify-center gap-2"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['stepper'] || dispensadorActivo()"
+              (click)="moverDispensador(true)">
+              @if (actionLoading()['stepper']) {
+                <span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              } @else {
+                Dispensar
+              }
+            </button>
+            <button
+              class="btn btn-outline px-3 py-1.5 text-xs w-24 flex items-center justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['stepper'] || !dispensadorActivo()"
+              (click)="moverDispensador(false)">
+              Detener
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actuadores Room 2 -->
+      <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--on-surface-variant)] mb-3">Control Manual</h4>
+      <div class="flex flex-col gap-3">
+        <!-- Luz -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="Lightbulb" class="w-5 h-5 text-[var(--accent)]"></lucide-icon>
+            <span class="font-semibold text-sm">Luz de Zona</span>
+          </div>
+          <button 
+            class="btn px-4 py-1.5 text-xs flex items-center gap-2 w-24 justify-center"
+            [class.btn-primary]="state.led.room2Led"
+            [class.btn-outline]="!state.led.room2Led"
+            [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['led2']"
+            (click)="toggleLed(2)">
+            @if (actionLoading()['led2']) {
+              <span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              {{ state.led.room2Led ? 'Encendido' : 'Apagado' }}
+            }
+          </button>
+        </div>
+        <!-- Ventilador -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="Wind" class="w-5 h-5 text-[var(--primary)]"></lucide-icon>
+            <span class="font-semibold text-sm">Ventilador</span>
+          </div>
+          <button
+            class="btn px-4 py-1.5 text-xs flex items-center gap-2 w-24 justify-center"
+            [class.btn-primary]="state.fan.fan2"
+            [class.btn-outline]="!state.fan.fan2"
+            [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['fan2']"
+            (click)="toggleFan(2)">
+            @if (actionLoading()['fan2']) {
+              <span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              {{ state.fan.fan2 ? 'Encendido' : 'Apagado' }}
+            }
+          </button>
+        </div>
+        <!-- Bomba Agua -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="Droplets" class="w-5 h-5 text-[var(--primary)]"></lucide-icon>
+            <span class="font-semibold text-sm">Bomba de Agua</span>
+          </div>
+          <button 
+            class="btn px-4 py-1.5 text-xs flex items-center gap-2 w-24 justify-center"
+            [class.btn-primary]="state.pump.enabled"
+            [class.btn-outline]="!state.pump.enabled"
+            [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['pump']"
+            (click)="togglePump()">
+            @if (actionLoading()['pump']) {
+              <span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              {{ state.pump.enabled ? 'Encendido' : 'Apagado' }}
+            }
+          </button>
+        </div>
+        <!-- ⭐ VENTANA HABITACIÓN 2 (NUEVO) -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="DoorOpen" class="w-5 h-5 text-stone-600"></lucide-icon>
+            <div>
+              <span class="font-semibold text-sm block">Ventana Habitación 2</span>
+              <span class="text-xs text-stone-500">{{ state.servo2?.angle ?? 0 }}°</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-outline px-3 py-1.5 text-xs w-20 flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo2'] || (state.servo2?.angle ?? 0) >= 180"
+              (click)="setServo(2, 180)">
+              Abrir
+            </button>
+            <button
+              class="btn btn-primary px-3 py-1.5 text-xs w-20 flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo2'] || (state.servo2?.angle ?? 0) <= 0"
+              (click)="setServo(2, 0)">
+              Cerrar
+            </button>
+          </div>
+        </div>
+        <!-- Servo 3 / Orientación de la cámara -->
+        <div class="flex items-center justify-between p-3 bg-black/[0.02] rounded-xl border border-black/5">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="Video" class="w-5 h-5 text-stone-600"></lucide-icon>
+            <div>
+              <span class="font-semibold text-sm block">Cámara</span>
+              <span class="text-xs text-stone-500">{{ state.servo3?.angle ?? 0 }}°</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-outline px-3 py-1.5 text-xs flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo3'] || (state.servo3?.angle ?? 0) <= 0"
+              (click)="girarCamara(-30)"
+              title="Girar la cámara 30° a la izquierda">
+              <lucide-icon [img]="RotateCcw" class="w-4 h-4"></lucide-icon>
+            </button>
+            <button
+              class="btn btn-outline px-3 py-1.5 text-xs w-20 flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo3']"
+              (click)="setServo(3, 90)">
+              Centrar
+            </button>
+            <button
+              class="btn btn-outline px-3 py-1.5 text-xs flex justify-center"
+              [disabled]="controlesBloqueados() || state.automaticMode || actionLoading()['servo3'] || (state.servo3?.angle ?? 0) >= 180"
+              (click)="girarCamara(30)"
+              title="Girar la cámara 30° a la derecha">
+              <lucide-icon [img]="RotateCw" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,99 @@
+<div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div>
+    <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold flex items-center gap-2">
+      <lucide-icon [img]="Server" class="w-7 h-7 text-[var(--accent)]"></lucide-icon> Historial de Dispositivos (Solo Lectura)
+    </h2>
+    <p class="text-[var(--on-surface-variant)] mt-1 text-sm">Auditoría y lecturas pasadas de tus dispensadores, bebederos y sensores IoT.</p>
+  </div>
+</div>
+
+@if (isLoading()) {
+  <div class="flex justify-center items-center h-64">
+    <div class="w-10 h-10 border-4 border-[rgba(195,200,193,0.4)] border-t-[var(--primary)] rounded-full animate-spin"></div>
+  </div>
+} @else {
+  <!-- Selector de dispositivo -->
+  <div class="flex gap-2 overflow-x-auto pb-4 mb-6">
+    @for (d of dispositivos(); track d.id) {
+      <button
+        class="px-4 py-2.5 rounded-xl font-bold text-sm border transition-all shrink-0 flex items-center gap-2"
+        [ngClass]="dispositivoSeleccionado() === d.id ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-md' : 'bg-white text-[var(--primary)] border-gray-200 hover:bg-gray-50'"
+        (click)="seleccionarDispositivo(d.id)"
+      >
+        <lucide-icon [img]="Cpu" class="w-4 h-4"></lucide-icon> {{ d.etiqueta }}
+      </button>
+    }
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Tabla Lecturas de Sensores -->
+    <div class="card p-6 border border-[rgba(27,48,34,0.1)]">
+      <h3 class="font-bold text-lg text-[var(--primary)] mb-4 flex items-center gap-2">
+        <lucide-icon [img]="Activity" class="w-5 h-5 text-[var(--primary)]"></lucide-icon> Lecturas de Sensores
+      </h3>
+      @if (lecturas().length === 0) {
+        <p class="text-sm text-[var(--on-surface-variant)] py-8 text-center">No hay lecturas registradas para este dispositivo.</p>
+      } @else {
+        <div class="overflow-y-auto max-h-96">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 text-xs font-bold uppercase text-[var(--primary)] sticky top-0">
+              <tr>
+                <th class="p-3">Fecha / Hora</th>
+                <th class="p-3">Valor</th>
+                <th class="p-3">Unidad</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              @for (l of lecturas(); track $index) {
+                <tr class="hover:bg-gray-50/50">
+                  <td class="p-3 text-xs text-gray-500 font-mono">{{ l.ts | date:'short' }}</td>
+                  <td class="p-3 font-bold text-[var(--primary)]">{{ l.valor }}</td>
+                  <td class="p-3 text-xs text-gray-500">{{ l.unidad }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Tabla Comandos de Actuadores -->
+    <div class="card p-6 border border-[rgba(253,192,3,0.1)]">
+      <h3 class="font-bold text-lg text-[var(--primary)] mb-4 flex items-center gap-2">
+        <lucide-icon [img]="Zap" class="w-5 h-5 text-[var(--accent)]"></lucide-icon> Comandos de Actuadores
+      </h3>
+      @if (actuadores().length === 0) {
+        <p class="text-sm text-[var(--on-surface-variant)] py-8 text-center">No hay comandos registrados para este dispositivo.</p>
+      } @else {
+        <div class="overflow-y-auto max-h-96">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 text-xs font-bold uppercase text-[var(--primary)] sticky top-0">
+              <tr>
+                <th class="p-3">Fecha</th>
+                <th class="p-3">Comando</th>
+                <th class="p-3">Origen</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              @for (a of actuadores(); track a.id) {
+                <tr class="hover:bg-gray-50/50">
+                  <td class="p-3 text-xs text-gray-500 font-mono">{{ a.created_at | date:'short' }}</td>
+                  <td class="p-3 font-semibold text-gray-800">{{ a.comando }}</td>
+                  <td class="p-3">
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase"
+                      [class]="a.origen === 'APP' ? 'bg-[var(--primary-surface)] text-[var(--primary)]' : 'bg-[var(--accent)]/15 text-[#8a6a00]'">
+                      {{ a.origen === 'APP' ? 'App' : 'Automático' }}
+                    </span>
+                    @if (a.ejecutado_por_nombre) {
+                      <span class="block text-[10px] text-gray-400 mt-0.5">por {{ a.ejecutado_por_nombre }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+}

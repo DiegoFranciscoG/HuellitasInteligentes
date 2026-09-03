@@ -1,0 +1,18 @@
+/* La pantalla usa el mismo lenguaje visual que el resto del sitio (tarjetas
+   blancas, verde/crema, títulos serif), así que ya no hace falta el estilo
+   oscuro tipo "glass" con acentos índigo que desentonaba con la página. */
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

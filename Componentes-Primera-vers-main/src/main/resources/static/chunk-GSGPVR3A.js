@@ -1,0 +1,1 @@
+import{a as n}from"./chunk-H5CHG3UB.js";import{ab as e}from"./chunk-I3BTEOGU.js";var s=class r{transform(t){return t?t.startsWith("http")||t.startsWith("data:image")||t.startsWith("blob:")?t:n.apiUrl.replace("/api/huellitas","")+(t.startsWith("/")?t:"/"+t):""}static \u0275fac=function(i){return new(i||r)};static \u0275pipe=e({name:"mediaUrl",type:r,pure:!0})};export{s as a};

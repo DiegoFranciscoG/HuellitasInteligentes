@@ -1,0 +1,271 @@
+<div class="max-w-7xl mx-auto">
+  <div class="mb-8">
+    <span class="inline-block bg-[var(--primary)]/8 text-[var(--primary)] text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3">
+      Panel SaaS
+    </span>
+    <h1 class="font-serif text-3xl text-[var(--primary)] font-bold">Explorador de <span class="italic-serif">Datos Avanzado</span></h1>
+    <p class="text-sm text-[var(--on-surface-variant)] mt-1 max-w-2xl">
+      Analiza, filtra y exporta métricas reales de tu flota IoT y base de usuarios en tiempo real. Busca primero para ver y exportar resultados.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
+
+    <!-- ═══ CUERPO PRINCIPAL ═══ -->
+    <div class="min-w-0">
+      <!-- Búsqueda + filtros -->
+      <div class="bg-[var(--surface-card)] p-5 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] mb-6">
+        <div class="flex gap-2 mb-4">
+          <div class="relative flex-1">
+            <lucide-icon [img]="Search" class="w-4 h-4 text-[var(--on-surface-variant)] absolute left-5 top-1/2 -translate-y-1/2"></lucide-icon>
+            <input
+              type="text"
+              [ngModel]="busqueda()"
+              (ngModelChange)="busqueda.set($event)"
+              (keydown.enter)="buscar()"
+              placeholder="Buscar nombre, correo o ID..."
+              class="w-full rounded-[2rem] border border-[var(--outline)]/30 bg-[var(--surface)] pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+            >
+          </div>
+          <button (click)="buscar()" [disabled]="isLoading()"
+                  class="bg-[var(--primary)] hover:bg-[var(--primary-light)] text-white rounded-[2rem] px-6 text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-60 shrink-0">
+            <lucide-icon [img]="Search" class="w-4 h-4"></lucide-icon> {{ isLoading() ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-1">Categoría</label>
+            <select [ngModel]="categoria()" (ngModelChange)="categoria.set($event)"
+                    class="w-full rounded-xl border border-[var(--outline)]/30 bg-[var(--surface)] px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+              @for (c of categoriasDisponibles; track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-1">Estado</label>
+            <select [ngModel]="estado()" (ngModelChange)="estado.set($event)"
+                    class="w-full rounded-xl border border-[var(--outline)]/30 bg-[var(--surface)] px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+              @for (e of estadosDisponibles; track e) { <option [value]="e">{{ e }}</option> }
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-1 flex items-center gap-1">
+              <lucide-icon [img]="Calendar" class="w-3 h-3"></lucide-icon> Fecha de registro
+            </label>
+            <div class="flex gap-1.5">
+              <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)"
+                     class="w-full rounded-xl border border-[var(--outline)]/30 bg-[var(--surface)] px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+              <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)"
+                     class="w-full rounded-xl border border-[var(--outline)]/30 bg-[var(--surface)] px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="bg-[var(--surface-card)] rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] overflow-hidden">
+        <div class="flex items-center justify-between px-6 pt-5 pb-3">
+          <h3 class="font-serif text-lg font-bold text-[var(--primary)]">Vista Previa de Datos</h3>
+          @if (busquedaRealizada()) {
+            <span class="bg-[var(--primary)]/8 text-[var(--primary)] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+              {{ registros().length }} registros encontrados
+            </span>
+          }
+        </div>
+
+        @if (errorBusqueda()) {
+          <div class="mx-6 mb-4 p-3 rounded-xl bg-[var(--error-surface)] text-[var(--error)] text-xs font-medium">{{ errorBusqueda() }}</div>
+        }
+
+        @if (!busquedaRealizada() && !isLoading()) {
+          <div class="p-12 text-center">
+            <lucide-icon [img]="Search" class="w-8 h-8 text-[var(--outline)] mx-auto mb-3"></lucide-icon>
+            <p class="text-sm text-[var(--on-surface-variant)]">Ajusta los filtros y presiona <strong>Buscar</strong> para ver resultados reales.</p>
+          </div>
+        } @else if (isLoading()) {
+          <div class="p-10 text-center text-sm text-[var(--on-surface-variant)]">Cargando datos reales...</div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-[var(--outline)]/20">
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-6 py-3">ID</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Nombre</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Correo</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Categoría</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Estado</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Cámaras</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">IoT</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Mascotas</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Plan</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Última Actividad</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3">Registro</th>
+                  <th class="font-serif text-left font-bold text-[var(--primary)] text-sm px-4 py-3 w-16">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of registros().slice(0, 50); track r.categoria + '-' + r.id) {
+                  <tr class="border-b border-[var(--outline)]/10 hover:bg-[var(--surface)] transition-colors">
+                    <td class="px-6 py-4 text-xs text-[var(--on-surface-variant)] font-mono">{{ r.id }}</td>
+                    <td class="px-4 py-4 font-semibold text-[var(--on-surface)] whitespace-nowrap">{{ r.nombre }}</td>
+                    <td class="px-4 py-4 text-xs text-[var(--on-surface-variant)]">{{ r.correo || (r.detalle || '—') }}</td>
+                    <td class="px-4 py-4 text-[var(--on-surface-variant)] whitespace-nowrap">{{ r.categoria }}</td>
+                    <td class="px-4 py-4">
+                      <span class="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full" [ngClass]="claseEstado(r.estado)">{{ r.estado }}</span>
+                    </td>
+                    <td class="px-4 py-4 text-center text-[var(--on-surface-variant)]">{{ r.camaras_conectadas ?? '—' }}</td>
+                    <td class="px-4 py-4 text-center text-[var(--on-surface-variant)]">{{ r.iot_implementado ?? '—' }}</td>
+                    <td class="px-4 py-4 text-center text-[var(--on-surface-variant)]">{{ r.mascotas ?? '—' }}</td>
+                    <td class="px-4 py-4 text-[var(--on-surface-variant)] whitespace-nowrap">{{ r.plan || '—' }}</td>
+                    <td class="px-4 py-4 text-xs text-[var(--on-surface-variant)] whitespace-nowrap">{{ r.ultima_actividad | date:'short' }}</td>
+                    <td class="px-4 py-4 text-xs text-[var(--on-surface-variant)] whitespace-nowrap">{{ r.fecha_registro | date:'mediumDate' }}</td>
+                    <td class="px-4 py-4">
+                      <button (click)="detalleAbierto.set(r)" class="text-[var(--primary)] hover:text-[var(--accent-dark)] text-xs font-bold flex items-center gap-1">
+                        <lucide-icon [img]="Eye" class="w-3.5 h-3.5"></lucide-icon> Ver
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="12" class="text-center py-10 text-sm text-[var(--on-surface-variant)]">Sin registros que coincidan con el filtro.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (registros().length > 50) {
+            <p class="text-center text-xs text-[var(--on-surface-variant)] py-4">Mostrando 50 de {{ registros().length }} — exporta para ver todos.</p>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- ═══ SIDEBAR DE ACCIONES ═══ -->
+    <div class="flex flex-col gap-5 xl:sticky xl:top-6">
+      <div class="bg-[var(--primary)] rounded-[2rem] p-6 text-white shadow-[0_10px_30px_-10px_rgba(27,48,34,0.4)]">
+        <h3 class="font-serif text-lg font-bold mb-1">Acciones de Exportación</h3>
+        @if (!busquedaRealizada()) {
+          <p class="text-xs text-white/60 mb-4 flex items-center gap-1.5">
+            <lucide-icon [img]="Lock" class="w-3 h-3"></lucide-icon> Busca primero para desbloquear
+          </p>
+        } @else {
+          <p class="text-xs text-white/60 mb-4">{{ registros().length }} registros listos para exportar</p>
+        }
+        <div class="flex flex-col gap-2.5">
+          <button (click)="descargar('csv')" [disabled]="!busquedaRealizada() || exportando() === 'csv'"
+                  class="bg-white/10 hover:bg-white/15 border border-white/10 rounded-[32px] py-3 px-4 text-sm font-semibold flex items-center gap-3 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed">
+            <lucide-icon [img]="exportando() === 'csv' ? Clock : FileDown" class="w-4 h-4 text-[var(--accent)]"></lucide-icon>
+            {{ exportando() === 'csv' ? 'Generando...' : 'Exportar a CSV' }}
+          </button>
+          <button (click)="descargar('pdf')" [disabled]="!busquedaRealizada() || exportando() === 'pdf'"
+                  class="bg-white/10 hover:bg-white/15 border border-white/10 rounded-[32px] py-3 px-4 text-sm font-semibold flex items-center gap-3 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed">
+            <lucide-icon [img]="exportando() === 'pdf' ? Clock : FileText" class="w-4 h-4 text-[var(--accent)]"></lucide-icon>
+            {{ exportando() === 'pdf' ? 'Generando...' : 'Exportar a PDF' }}
+          </button>
+          <button (click)="abrirModalReporte()" [disabled]="!busquedaRealizada()"
+                  class="bg-white/10 hover:bg-white/15 border border-white/10 rounded-[32px] py-3 px-4 text-sm font-semibold flex items-center gap-3 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed">
+            <lucide-icon [img]="Clock" class="w-4 h-4 text-[var(--accent)]"></lucide-icon> Enviar Reporte por Correo
+          </button>
+        </div>
+        @if (errorExportar()) {
+          <p class="text-xs text-[var(--error)] mt-3">{{ errorExportar() }}</p>
+        }
+      </div>
+
+      <!-- Métricas rápidas: reales, no de ejemplo -->
+      <div class="bg-[var(--surface-card)] rounded-[32px] p-6 border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)]">
+        <h3 class="font-serif text-base font-bold text-[var(--primary)] mb-4">Métricas Rápidas</h3>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-[var(--on-surface-variant)] flex items-center gap-1.5">
+              <lucide-icon [img]="TrendingUp" class="w-3.5 h-3.5"></lucide-icon> Crecimiento (mes vs. mes)
+            </span>
+            @if (tasaCrecimiento() !== null) {
+              <span class="text-sm font-bold" [ngClass]="tasaCrecimiento()! >= 0 ? 'text-[var(--accent-dark)]' : 'text-[var(--error)]'">
+                {{ tasaCrecimiento()! >= 0 ? '+' : '' }}{{ tasaCrecimiento() }}%
+              </span>
+            } @else {
+              <span class="text-xs text-[var(--on-surface-variant)]">Sin datos suficientes</span>
+            }
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-[var(--on-surface-variant)] flex items-center gap-1.5">
+              <lucide-icon [img]="Database" class="w-3.5 h-3.5"></lucide-icon> Registros totales
+            </span>
+            <span class="text-sm font-bold text-[var(--primary)]">{{ totalRegistros() ?? '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-[var(--on-surface-variant)] text-center flex items-center justify-center gap-1.5 px-2">
+        <lucide-icon [img]="ShieldCheck" class="w-3.5 h-3.5 shrink-0"></lucide-icon>
+        Protección de Datos: la información se genera al momento desde la base y no se almacena fuera del sistema.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ver detalle -->
+@if (detalleAbierto(); as d) {
+  <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="detalleAbierto.set(null)">
+    <div class="bg-[var(--surface-card)] rounded-[32px] p-6 max-w-md w-full shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="flex justify-between items-start mb-4">
+        <h3 class="font-serif text-xl font-bold text-[var(--primary)]">{{ d.nombre }}</h3>
+        <button (click)="detalleAbierto.set(null)" class="text-[var(--on-surface-variant)] hover:text-[var(--primary)]">
+          <lucide-icon [img]="X" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">ID</dt><dd class="font-semibold">{{ d.id }}</dd></div>
+        <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Categoría</dt><dd class="font-semibold">{{ d.categoria }}</dd></div>
+        @if (d.correo) {
+          <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Correo</dt><dd class="font-semibold text-right">{{ d.correo }}</dd></div>
+        }
+        @if (d.detalle) {
+          <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Detalle</dt><dd class="font-semibold text-right">{{ d.detalle }}</dd></div>
+        }
+        <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Estado</dt><dd><span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full" [ngClass]="claseEstado(d.estado)">{{ d.estado }}</span></dd></div>
+        @if (d.camaras_conectadas !== null) {
+          <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Cámaras conectadas</dt><dd class="font-semibold">{{ d.camaras_conectadas }}</dd></div>
+        }
+        @if (d.iot_implementado !== null) {
+          <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">IoT implementado</dt><dd class="font-semibold">{{ d.iot_implementado }}</dd></div>
+        }
+        @if (d.mascotas !== null) {
+          <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Mascotas registradas</dt><dd class="font-semibold">{{ d.mascotas }}</dd></div>
+        }
+        @if (d.plan) {
+          <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Plan</dt><dd class="font-semibold">{{ d.plan }}</dd></div>
+        }
+        <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Fecha de registro</dt><dd class="font-semibold">{{ d.fecha_registro | date:'mediumDate' }}</dd></div>
+        <div class="flex justify-between"><dt class="text-[var(--on-surface-variant)]">Última actividad</dt><dd class="font-semibold">{{ d.ultima_actividad | date:'medium' }}</dd></div>
+      </dl>
+    </div>
+  </div>
+}
+
+<!-- Modal: Enviar Reporte -->
+@if (modalReporteAbierto()) {
+  <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="cerrarModalReporte()">
+    <div class="bg-[var(--surface-card)] rounded-[32px] p-6 max-w-sm w-full shadow-2xl" (click)="$event.stopPropagation()">
+      <h3 class="font-serif text-xl font-bold text-[var(--primary)] mb-1">Enviar Reporte</h3>
+      <p class="text-xs text-[var(--on-surface-variant)] mb-4">Se envía una sola vez, al correo que indiques, con los {{ registros().length }} registros del filtro actual.</p>
+      <label class="block text-xs font-bold text-[var(--on-surface-variant)] mb-1">Correo destino</label>
+      <input type="email" [ngModel]="emailReporte()" (ngModelChange)="emailReporte.set($event)" placeholder="tu@correo.com"
+             class="w-full rounded-xl border border-[var(--outline)]/30 bg-[var(--surface)] px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20">
+      <label class="block text-xs font-bold text-[var(--on-surface-variant)] mb-2">Formato</label>
+      <div class="flex gap-2 mb-5">
+        <button (click)="formatoReporte.set('csv')" class="flex-1 rounded-xl py-2 text-xs font-bold border transition-colors"
+                [ngClass]="formatoReporte() === 'csv' ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'border-[var(--outline)]/30 text-[var(--on-surface-variant)]'">CSV</button>
+        <button (click)="formatoReporte.set('pdf')" class="flex-1 rounded-xl py-2 text-xs font-bold border transition-colors"
+                [ngClass]="formatoReporte() === 'pdf' ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'border-[var(--outline)]/30 text-[var(--on-surface-variant)]'">PDF</button>
+      </div>
+      @if (reporteMensaje()) {
+        <p class="text-xs mb-3" [ngClass]="reporteMensaje().includes('correctamente') ? 'text-[var(--accent-dark)]' : 'text-[var(--error)]'">{{ reporteMensaje() }}</p>
+      }
+      <div class="flex gap-3">
+        <button (click)="cerrarModalReporte()" class="flex-1 rounded-xl py-2.5 text-xs font-bold border border-[var(--outline)]/30 text-[var(--on-surface-variant)]">Cancelar</button>
+        <button (click)="enviarReporte()" [disabled]="enviandoReporte()" class="flex-1 rounded-xl py-2.5 text-xs font-bold bg-[var(--primary)] text-white disabled:opacity-50">
+          {{ enviandoReporte() ? 'Enviando...' : 'Enviar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

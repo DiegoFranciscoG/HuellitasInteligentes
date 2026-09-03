@@ -1,0 +1,123 @@
+<div class="min-h-screen bg-[#FFFAED] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+  
+  <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-[var(--primary)] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <lucide-icon [img]="Home" class="w-8 h-8 text-white"></lucide-icon>
+      </div>
+      <h2 class="text-3xl font-extrabold text-[#2D3748] tracking-tight">Completar Registro</h2>
+      <p class="mt-2 text-sm text-[#4A5568]">Necesitamos un par de datos para configurar tu hogar inteligente</p>
+    </div>
+
+    <!-- Aviso: llegó aquí por haber sido removido de una vivienda, no por registrarse de cero -->
+    <div *ngIf="casaAnterior()" class="mt-8 bg-[#FFF6E5] border border-[#F0C674] rounded-2xl p-5">
+      <p class="font-bold text-[#8a6a00] text-sm">Fuiste removido de "{{ casaAnterior() }}"</p>
+      <p class="mt-1.5 text-sm text-[#5a4a1f]">
+        Puedes crear tu propia vivienda ahora mismo completando el formulario de abajo, o cerrar
+        sesión y esperar a que el propietario vuelva a agregarte como miembro.
+      </p>
+      <button type="button" (click)="cerrarSesionYEsperar()"
+        class="mt-3 text-sm font-bold text-[#8a6a00] underline hover:text-[#6b5200] transition-colors">
+        Cerrar sesión y esperar
+      </button>
+    </div>
+
+    <div class="mt-8 bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-[#E2E8F0]">
+      <form [formGroup]="onboardingForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+        <!-- Mensaje de error -->
+        <div *ngIf="errorMessage()" class="bg-[var(--error-surface)] text-[var(--error)] p-4 rounded-xl text-sm flex items-center font-medium border border-[var(--error)]">
+          {{ errorMessage() }}
+        </div>
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-sm font-semibold text-[#2D3748] mb-1">Tu Nombre Completo</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#A0AEC0] group-focus-within:text-[var(--primary)] transition-colors">
+              <lucide-icon [img]="User" class="w-5 h-5"></lucide-icon>
+            </div>
+            <input formControlName="nombre" type="text"
+              class="block w-full pl-10 pr-3 py-3 border border-[#E2E8F0] rounded-xl text-[#2D3748] placeholder-[#A0AEC0] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all bg-[#F7FAFC] focus:bg-white"
+              placeholder="Ej. Juan Pérez"
+              [class.border-[var(--error)]]="isFieldInvalid('nombre')"
+              [class.bg-[var(--error-surface)]]="isFieldInvalid('nombre')">
+          </div>
+          <p *ngIf="isFieldInvalid('nombre')" class="mt-1 text-xs text-[var(--error)] font-medium">El nombre es requerido</p>
+        </div>
+
+        <!-- Nombre de la Casa -->
+        <div>
+          <label class="block text-sm font-semibold text-[#2D3748] mb-1">Nombre de tu Hogar</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#A0AEC0] group-focus-within:text-[var(--primary)] transition-colors">
+              <lucide-icon [img]="Home" class="w-5 h-5"></lucide-icon>
+            </div>
+            <input formControlName="casa_nombre" type="text"
+              class="block w-full pl-10 pr-3 py-3 border border-[#E2E8F0] rounded-xl text-[#2D3748] placeholder-[#A0AEC0] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all bg-[#F7FAFC] focus:bg-white"
+              placeholder="Ej. Casa de Juan"
+              [class.border-[var(--error)]]="isFieldInvalid('casa_nombre')"
+              [class.bg-[var(--error-surface)]]="isFieldInvalid('casa_nombre')">
+          </div>
+          <p *ngIf="isFieldInvalid('casa_nombre')" class="mt-1 text-xs text-[var(--error)] font-medium">El nombre del hogar es requerido</p>
+        </div>
+
+        <!-- Ubicación (Mapa y Geoposición) -->
+        <div class="pt-2">
+          <label class="block text-sm font-semibold text-[#2D3748] mb-1">Ubicación del Hogar</label>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1 relative group">
+              <input 
+                type="text" 
+                formControlName="ciudad" 
+                placeholder="Ciudad (ej. Quito)"
+                class="block w-full px-3 py-3 border border-[#E2E8F0] rounded-xl text-[#2D3748] placeholder-[#A0AEC0] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all bg-[#F7FAFC] focus:bg-white"
+              />
+            </div>
+            <button type="button" (click)="getLocation()" class="flex items-center justify-center gap-2 bg-[#F7FAFC] border border-[#E2E8F0] hover:border-[var(--primary)] hover:text-[var(--primary)] text-[#718096] px-3 py-3 rounded-xl font-medium text-sm transition-all" title="Usar mi ubicación actual">
+              <lucide-icon [img]="Compass" class="w-4 h-4"></lucide-icon>
+              <span class="hidden sm:inline">Auto</span>
+            </button>
+            <button type="button" (click)="toggleMap()" class="flex items-center justify-center gap-2 bg-[#F7FAFC] border border-[#E2E8F0] hover:border-[var(--primary)] hover:text-[var(--primary)] text-[#718096] px-3 py-3 rounded-xl font-medium text-sm transition-all" [ngClass]="{'border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5': showMap()}">
+              <lucide-icon [img]="MapIcon" class="w-4 h-4"></lucide-icon>
+              <span class="hidden sm:inline">Mapa</span>
+            </button>
+          </div>
+
+          <!-- Contenedor del Mapa -->
+          <div [class.hidden]="!showMap()">
+            <div class="mt-3 rounded-xl overflow-hidden border border-[#E2E8F0] shadow-inner h-[200px] relative animate-fade-slide-in">
+              <div id="leafletMapOnboarding" class="w-full h-full z-0"></div>
+              <div class="absolute top-2 right-2 z-[1000] bg-white/90 backdrop-blur text-[10px] px-2 py-1 rounded shadow text-black/60 font-bold uppercase tracking-wider">
+                Arrastra el pin
+              </div>
+            </div>
+          </div>
+          
+          <!-- Indicador visual de coordenadas -->
+          <p *ngIf="onboardingForm.get('latitud')?.value" class="text-[10px] text-[var(--primary)] mt-2 font-medium flex items-center gap-1">
+            <lucide-icon [img]="MapPin" class="w-3 h-3"></lucide-icon>
+            Ubicación guardada: {{ onboardingForm.get('latitud')?.value | number:'1.4-4' }}, {{ onboardingForm.get('longitud')?.value | number:'1.4-4' }}
+          </p>
+          
+          <!-- Inputs ocultos para coordenadas -->
+          <input type="hidden" formControlName="latitud">
+          <input type="hidden" formControlName="longitud">
+        </div>
+
+        <button type="submit" [disabled]="isLoading()"
+          class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-[var(--primary)]/30 text-sm font-bold text-white bg-[var(--primary)] hover:bg-[#F37021] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none mt-8">
+          <lucide-icon *ngIf="isLoading()" [img]="Loader2" class="animate-spin w-5 h-5 mr-2"></lucide-icon>
+          Completar Registro
+        </button>
+
+        <div class="text-center mt-4">
+          <button type="button" (click)="logout()" class="text-sm font-medium text-[#718096] hover:text-[#2D3748] flex items-center justify-center mx-auto transition-colors">
+            <lucide-icon [img]="LogOut" class="w-4 h-4 mr-1"></lucide-icon>
+            Cerrar sesión
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

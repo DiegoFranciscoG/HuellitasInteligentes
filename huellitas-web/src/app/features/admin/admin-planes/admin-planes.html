@@ -1,0 +1,180 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+        <lucide-icon [img]="Crown" class="w-6 h-6 text-[var(--accent)]"></lucide-icon> Gestión de Planes y Ofertas
+      </h1>
+      <p class="text-xs text-gray-500">Administra precios, aplica descuentos y gestiona las ofertas de suscripción</p>
+    </div>
+    <button (click)="abrirCrear()" class="btn btn-primary py-2 px-4 text-xs font-bold flex items-center gap-2 rounded-xl">
+      <lucide-icon [img]="Plus" class="w-4 h-4"></lucide-icon> Crear Nuevo Plan
+    </button>
+  </div>
+
+  @if (mensaje()) {
+    <div class="p-4 rounded-xl bg-[var(--primary-surface)] text-[var(--primary)] text-xs border border-[var(--primary)] font-bold animate-fade-in">
+      {{ mensaje() }}
+    </div>
+  }
+
+  <!-- Plans Grid -->
+  @if (isLoading()) {
+    <div class="p-12 text-center text-xs text-gray-400">Cargando planes de suscripción...</div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      @for (plan of planes(); track plan.id) {
+        <div class="bg-white rounded-[32px] border p-6 shadow-sm flex flex-col justify-between space-y-4 relative"
+             [class.border-[var(--primary)]]="plan.activo"
+             [class.border-gray-200]="!plan.activo"
+             [class.opacity-60]="!plan.activo">
+
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-bold text-lg text-gray-900">{{ plan.nombre }}</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    [class.bg-[var(--primary-surface)]]="plan.activo"
+                    [class.text-[var(--primary)]]="plan.activo"
+                    [class.bg-gray-100]="!plan.activo"
+                    [class.text-gray-600]="!plan.activo">
+                {{ plan.activo ? 'ACTIVO' : 'INACTIVO' }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 min-h-[36px]">{{ plan.descripcion || 'Sin descripción' }}</p>
+
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              @if (plan.precio_oferta || (plan.descuento_porcentaje && plan.descuento_porcentaje > 0)) {
+                <div class="flex items-baseline gap-2">
+                  <span class="text-2xl font-extrabold text-[var(--primary)]">${{ plan.precio_oferta || plan.precio_mensual }}</span>
+                  <span class="text-xs text-gray-400 line-through">${{ plan.precio_mensual }}</span>
+                  <span class="px-2 py-0.5 bg-[var(--error-surface)] text-[var(--error)] text-[10px] font-bold rounded-full">
+                    -{{ plan.descuento_porcentaje || 10 }}% OFF
+                  </span>
+                </div>
+              } @else {
+                <span class="text-2xl font-extrabold text-gray-900">${{ plan.precio_mensual }} <span class="text-xs text-gray-400 font-normal">/mes</span></span>
+              }
+            </div>
+
+            <div class="mt-3 space-y-1 text-xs text-gray-600">
+              <p>• Límite de mascotas: <strong>{{ plan.limite_mascotas ?? 2 }}</strong></p>
+              <p>• Suscriptores activos: <strong class="text-[var(--primary)]">{{ plan.suscriptores || 0 }}</strong></p>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2 pt-4 border-t border-gray-100">
+            <button (click)="abrirEditar(plan)" class="btn btn-outline flex-1 py-1.5 px-3 text-xs font-bold flex items-center justify-center gap-1">
+              <lucide-icon [img]="Edit" class="w-3.5 h-3.5"></lucide-icon> Editar / Oferta
+            </button>
+            <button (click)="alternarEstadoPlan(plan)" class="btn bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 text-xs font-bold rounded-xl" title="Alternar Estado">
+              <lucide-icon [img]="Power" class="w-4 h-4"></lucide-icon>
+            </button>
+            <button (click)="eliminarPlan(plan)" class="btn bg-[var(--error-surface)] hover:bg-[var(--error)] hover:text-white text-[var(--error)] p-2 text-xs font-bold rounded-xl" title="Descontinuar Plan">
+              <lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal Crear Plan -->
+  @if (modalCrearOpen()) {
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4 animate-fade-slide-in">
+        <h3 class="font-serif font-bold text-lg text-[var(--primary)] flex items-center gap-2">
+          <lucide-icon [img]="Crown" class="w-5 h-5 text-[var(--accent)]"></lucide-icon> Crear Nuevo Plan
+        </h3>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Nombre del Plan *</label>
+            <select [ngModel]="tipoPlan()" (ngModelChange)="onTipoPlanChange($event)" class="form-select text-xs w-full py-2 px-3 rounded-xl border border-gray-200 mb-2">
+              <option value="FREE">FREE</option>
+              <option value="PREMIUM">PREMIUM</option>
+              <option value="VIP">VIP</option>
+              <option value="OTRO">OTRO</option>
+            </select>
+            @if (tipoPlan() === 'OTRO') {
+              <input [ngModel]="nuevoNombre()" (ngModelChange)="nuevoNombre.set($event)" type="text" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="Escribe el nombre del plan (Ej: Plan Pro Familiar)">
+            }
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Precio Mensual ($) *</label>
+            <input [ngModel]="nuevoPrecio()" (ngModelChange)="onPrecioBaseChange($event)" type="number" step="0.01" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Límite de Mascotas *</label>
+            <input [ngModel]="limiteMascotas()" (ngModelChange)="limiteMascotas.set($event)" type="number" min="1" step="1" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200">
+            <p class="text-[10px] text-gray-400 mt-1">Cuántas mascotas puede registrar una casa con este plan. Los dispositivos y cámaras no tienen límite.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Descripción</label>
+            <input [ngModel]="descripcionPlan()" (ngModelChange)="descripcionPlan.set($event)" type="text" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="Ej: Para hogares con más de 3 mascotas">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button (click)="cerrarModales()" class="btn btn-outline py-2 px-4 text-xs">Cancelar</button>
+          <button (click)="guardarNuevoPlan()" [disabled]="!nuevoNombre().trim()" class="btn btn-primary py-2 px-4 text-xs font-bold">
+            Guardar Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Editar Plan / Oferta -->
+  @if (modalEditarOpen()) {
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4 animate-fade-slide-in">
+        <h3 class="font-serif font-bold text-lg text-[var(--primary)] flex items-center gap-2">
+          <lucide-icon [img]="Tag" class="w-5 h-5 text-[var(--primary)]"></lucide-icon> Modificar Plan u Oferta
+        </h3>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Nombre del Plan *</label>
+            <select [ngModel]="tipoPlan()" (ngModelChange)="onTipoPlanChange($event)" class="form-select text-xs w-full py-2 px-3 rounded-xl border border-gray-200 mb-2">
+              <option value="FREE">FREE</option>
+              <option value="PREMIUM">PREMIUM</option>
+              <option value="VIP">VIP</option>
+              <option value="OTRO">OTRO</option>
+            </select>
+            @if (tipoPlan() === 'OTRO') {
+              <input [ngModel]="nuevoNombre()" (ngModelChange)="nuevoNombre.set($event)" type="text" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="Nombre personalizado (ej. PRO)">
+            }
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Precio Base Mensual ($) *</label>
+            <input [ngModel]="nuevoPrecio()" (ngModelChange)="onPrecioBaseChange($event)" type="number" step="0.01" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Precio de Oferta ($) (Opcional)</label>
+              <input [ngModel]="precioOferta()" (ngModelChange)="onOfertaChange($event)" type="number" step="0.01" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="Ej: 6.99">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Descuento (%) (Opcional)</label>
+              <input [ngModel]="descuentoPct()" (ngModelChange)="onDescuentoChange($event)" type="number" min="0" max="100" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="Ej: 20">
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-400 -mt-1">El precio de oferta y el descuento se calculan uno del otro automáticamente.</p>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Límite de Mascotas *</label>
+            <input [ngModel]="limiteMascotas()" (ngModelChange)="limiteMascotas.set($event)" type="number" min="1" step="1" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button (click)="cerrarModales()" class="btn btn-outline py-2 px-4 text-xs">Cancelar</button>
+          <button (click)="guardarEdicionPlan()" class="btn btn-primary py-2 px-4 text-xs font-bold">
+            Guardar Cambios
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

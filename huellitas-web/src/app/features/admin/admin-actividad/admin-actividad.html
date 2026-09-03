@@ -1,0 +1,115 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+        <lucide-icon [img]="Activity" class="w-6 h-6 text-[var(--primary)]"></lucide-icon> Actividad de la Plataforma
+      </h1>
+      <p class="text-xs text-gray-500">Monitoreo de conexiones recientes, inactividad y cuentas dadas de baja</p>
+    </div>
+    <button (click)="cargarActividad()" class="btn btn-outline py-2 px-4 text-xs flex items-center gap-2">
+      <lucide-icon [img]="RefreshCw" class="w-4 h-4" [class.animate-spin]="cargando()"></lucide-icon>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Activity Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-5 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[var(--primary-surface)] text-[var(--primary)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Users" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 font-medium">Conectados (Últimas 24h)</p>
+        <h3 class="text-2xl font-bold text-gray-800">{{ actividad().conectados_24h }}</h3>
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[var(--primary-surface)] text-[var(--primary)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Clock" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 font-medium">Activos (Últimos 7 días)</p>
+        <h3 class="text-2xl font-bold text-gray-800">{{ actividad().conectados_7d }}</h3>
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[rgba(253,192,3,0.15)] text-[#8a6a00] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Clock" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 font-medium">Inactivos (&gt; 30 días)</p>
+        <h3 class="text-2xl font-bold text-gray-800">{{ actividad().inactivos_30d }}</h3>
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-[var(--error-surface)] text-[var(--error)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="UserX" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 font-medium">Cuentas Desactivadas</p>
+        <h3 class="text-2xl font-bold text-gray-800">{{ actividad().desactivados }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual Activity Breakdown Chart -->
+  <div class="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
+    <h3 class="font-bold text-sm text-[var(--primary)] flex items-center gap-2">
+      <lucide-icon [img]="BarChart" class="w-4 h-4 text-[var(--primary)]"></lucide-icon> Proporción de Actividad de Usuarios
+    </h3>
+
+    <div class="space-y-4">
+      <!-- 24h connected -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-[var(--primary)]">Usuarios Conectados (24 Horas)</span>
+          <span class="text-[var(--primary)]">{{ actividad().conectados_24h }} usuarios</span>
+        </div>
+        <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden">
+          <div class="bg-[var(--primary)] h-full rounded-full transition-all duration-500"
+               [style.width.%]="getTotalUsuarios() > 0 ? (actividad().conectados_24h / getTotalUsuarios()) * 100 : 100"></div>
+        </div>
+      </div>
+
+      <!-- 7 days connected -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-[var(--primary)]">Usuarios Activos en la Semana (7 Días)</span>
+          <span class="text-[var(--primary)]">{{ actividad().conectados_7d }} usuarios</span>
+        </div>
+        <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden">
+          <div class="bg-[var(--primary)] h-full rounded-full transition-all duration-500"
+               [style.width.%]="getTotalUsuarios() > 0 ? (actividad().conectados_7d / getTotalUsuarios()) * 100 : 100"></div>
+        </div>
+      </div>
+
+      <!-- Inactive > 30 days -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-[#8a6a00]">Usuarios Inactivos (Más de 30 días sin ingresar)</span>
+          <span class="text-[#8a6a00]">{{ actividad().inactivos_30d }} usuarios</span>
+        </div>
+        <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden">
+          <div class="bg-[var(--accent)] h-full rounded-full transition-all duration-500"
+               [style.width.%]="getTotalUsuarios() > 0 ? (actividad().inactivos_30d / getTotalUsuarios()) * 100 : 0"></div>
+        </div>
+      </div>
+
+      <!-- Deactivated -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-[var(--error)]">Cuentas Eliminadas / Desactivadas</span>
+          <span class="text-[var(--error)]">{{ actividad().desactivados }} usuarios</span>
+        </div>
+        <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden">
+          <div class="bg-[var(--error)] h-full rounded-full transition-all duration-500"
+               [style.width.%]="getTotalUsuarios() > 0 ? (actividad().desactivados / getTotalUsuarios()) * 100 : 0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

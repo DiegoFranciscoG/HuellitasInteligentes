@@ -1,0 +1,66 @@
+<div class="space-y-6 max-w-4xl mx-auto">
+  <!-- Header -->
+  <div>
+    <h1 class="text-2xl font-serif font-bold text-[var(--primary)] flex items-center gap-2">
+      <lucide-icon [img]="Megaphone" class="w-6 h-6 text-[var(--accent)]"></lucide-icon> Envío de Avisos Masivos
+    </h1>
+    <p class="text-xs text-gray-500">Redacta anuncios oficiales que aparecerán en la campanita de los usuarios</p>
+  </div>
+
+  @if (feedback()) {
+    <div class="p-4 rounded-xl bg-[var(--primary-surface)] text-[var(--primary)] text-xs border border-[var(--primary)] font-bold animate-fade-in">
+      {{ feedback() }}
+    </div>
+  }
+
+  <!-- Notice Composition Card -->
+  <div class="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+    <div>
+      <label class="block text-xs font-bold text-gray-700 mb-1">Título del Aviso *</label>
+      <input [ngModel]="titulo()" (ngModelChange)="titulo.set($event)" type="text" class="form-input text-xs w-full py-2.5 px-4 rounded-xl border border-gray-200" placeholder="Ej: Actualización de los términos de servicio">
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-700 mb-1">Categoría / Tipo</label>
+      <select [ngModel]="tipo()" (ngModelChange)="tipo.set($event)" class="form-input text-xs w-full py-2.5 px-4 rounded-xl border border-gray-200">
+        <option value="INFO">Información General</option>
+        <option value="ALERTA">Alerta de Mantenimiento</option>
+        <option value="SISTEMA">Novedad de Plataforma</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-700 mb-1">Mensaje del Anuncio *</label>
+      <textarea [ngModel]="mensaje()" (ngModelChange)="mensaje.set($event)" rows="4" class="form-input text-xs w-full p-4 rounded-xl border border-gray-200" placeholder="Escribe aquí el contenido del aviso..."></textarea>
+    </div>
+
+    <div class="flex justify-end pt-2">
+      <button (click)="enviarAviso()" [disabled]="!titulo().trim() || !mensaje().trim() || cargando()" class="btn btn-primary py-2.5 px-6 text-xs font-bold flex items-center gap-2 rounded-xl">
+        <lucide-icon [img]="Send" class="w-4 h-4"></lucide-icon> Enviar a Campanita de Usuarios
+      </button>
+    </div>
+  </div>
+
+  <!-- History of notices -->
+  <div class="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+    <h3 class="font-bold text-sm text-[var(--primary)] flex items-center gap-2">
+      <lucide-icon [img]="Bell" class="w-4 h-4 text-[var(--accent)]"></lucide-icon> Historial de Anuncios Enviados
+    </h3>
+    
+    @if (anunciosPrevios().length === 0) {
+      <div class="text-center py-6 text-xs text-gray-400">Sin anuncios enviados previamente.</div>
+    } @else {
+      <div class="space-y-3 max-h-80 overflow-y-auto">
+        @for (a of anunciosPrevios(); track a.id) {
+          <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-gray-900 text-xs">{{ a.titulo }}</span>
+              <span class="text-[10px] text-gray-400 font-medium">{{ a.created_at | date:'short' }}</span>
+            </div>
+            <p class="text-gray-600 leading-relaxed">{{ a.mensaje }}</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

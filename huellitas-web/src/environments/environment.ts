@@ -1,0 +1,11 @@
+export const environment = {
+  production: true,
+  apiUrl: 'https://huellitasinteligentes.duckdns.org/api/huellitas',
+  turnMeteredDomain: 'huellitas-inteligentes.metered.live',
+  turnMeteredApiKey: '1d2b99537beb7813392d88841bc30aa7f00e',
+  catApiKey: 'live_CKexemhSHrYkPRykOtZBQOKBUXabClK7lDW0tOQpzIsqx1vmN5H7JYFJZxYpgFl5',
+  sightengineApiUser: '286950796',
+  sightengineApiSecret: 'A7iP7YwH22P4R2gE4LrgWz5g8P6w5xP6',
+  demoMode: false,
+  apkDownloadUrl: 'https://huellitasinteligentes.duckdns.org/huellitas.apk'
+};

@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (Spring Boot)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Componentes-Primera-vers-main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compilar y probar
+        run: mvn -B test
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          FACEBOOK_APP_ID: ${{ secrets.FACEBOOK_APP_ID }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          OPENROUTER_API_KEY_IA: ${{ secrets.OPENROUTER_API_KEY_IA }}
+          OPENROUTER_API_KEY_MOD: ${{ secrets.OPENROUTER_API_KEY_MOD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
+          B2_MEDIA_ACCESS_KEY: ${{ secrets.B2_MEDIA_ACCESS_KEY }}
+          B2_MEDIA_SECRET_KEY: ${{ secrets.B2_MEDIA_SECRET_KEY }}
+          B2_AVATAR_ACCESS_KEY: ${{ secrets.B2_AVATAR_ACCESS_KEY }}
+          B2_AVATAR_SECRET_KEY: ${{ secrets.B2_AVATAR_SECRET_KEY }}
+          OPENAI_API_KEY_MODERACION: ${{ secrets.OPENAI_API_KEY_MODERACION }}
+
+  frontend:
+    name: Frontend (Angular)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: huellitas-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: huellitas-web/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Chequeo de tipos
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Build de producción
+        run: npx ng build --configuration production

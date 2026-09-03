@@ -1,0 +1,57 @@
+# ── Dependencias y compilados ──────────────────────────────────────────────
+node_modules/
+dist/
+build/
+target/
+bin/
+.gradle/
+*.class
+*.jar
+*.apk
+
+# ── Credenciales (NUNCA subir) ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+client_secret_*.json
+*-service-account.json
+env_produccion.txt
+env_*.txt
+*.pem
+*.key
+
+# ── Config/artefactos locales de asistentes de IA (no forman parte del proyecto) ──
+.claude/
+.agents/
+skills-lock.json
+capturas*.mjs
+bundle.js
+e2e.mjs
+e2e_full.mjs
+test_css.mjs
+
+# ── Flutter ────────────────────────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+
+# ── IDE y sistema ──────────────────────────────────────────────────────────
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+.DS_Store
+Thumbs.db
+
+# Respaldo del historial de los subrepositorios que se absorbieron en este
+# repositorio. Se conserva en disco por si hiciera falta, pero no se sube.
+.git.respaldo-historial/
+
+# ── Temporales del proyecto ────────────────────────────────────────────────
+*.log
+scratch/
+transcript_*.txt
+recovered_css_from_content.css
+*.png.bak

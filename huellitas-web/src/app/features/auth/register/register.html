@@ -1,0 +1,258 @@
+<div class="min-h-screen relative flex items-center justify-center p-4">
+
+  <!-- Background Image (Nature/Pets - Premium) -->
+  <div class="absolute inset-0 z-0">
+    <img
+      src="auth-bg/register-bg.jpg"
+      alt="Perros jugando en la playa"
+      class="w-full h-full object-cover object-center"
+    />
+    <!-- Overlay verde oscuro sutil -->
+    <div class="absolute inset-0 bg-[#061b0e]/70 backdrop-blur-sm mix-blend-multiply"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[#061b0e] via-transparent to-[#FFFAED]/10"></div>
+  </div>
+
+  <!-- Glassmorphism Card (3D scale-up + fade-in) -->
+  <main class="relative z-10 w-full max-w-[800px] bg-[#FFFAED]/10 backdrop-blur-2xl rounded-[2rem] border border-white/20 shadow-2xl p-8 sm:p-12 animate-fade-in-up transform transition-transform hover:scale-[1.01] duration-500 flex flex-col md:flex-row gap-12 items-center">
+
+    <!-- Left side: Branding & Value prop -->
+    <div class="flex-1 text-center md:text-left text-white space-y-6">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full border border-white/10 mb-2">
+        <lucide-icon [img]="Home" class="w-4 h-4"></lucide-icon>
+        <span class="text-xs font-semibold tracking-widest uppercase">Ecosistema Premium</span>
+      </div>
+      <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl text-[#FFFAED] leading-tight drop-shadow-lg italic">
+        Tu hogar,<br>su santuario
+      </h1>
+      <p class="text-white/80 font-light max-w-sm mx-auto md:mx-0 text-sm sm:text-base leading-relaxed">
+        Únete a Huellitas y descubre una nueva forma de conectar con tus mascotas mediante inteligencia artificial y monitoreo continuo.
+      </p>
+    </div>
+
+    <!-- Right side: Form -->
+    <div class="w-full max-w-[360px] bg-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      
+      <!-- Back button to login -->
+      <a routerLink="/auth/login" class="absolute top-6 right-6 text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors p-1 bg-[var(--surface)] rounded-full border border-[var(--outline)]/50 z-20">
+        <lucide-icon [img]="X" class="w-4 h-4"></lucide-icon>
+      </a>
+
+      <div class="mb-8">
+        <h2 class="font-serif text-2xl text-[var(--primary)] font-bold mb-1">Crear cuenta</h2>
+        <p class="text-xs text-[var(--on-surface-variant)]">Comienza tu experiencia inteligente</p>
+      </div>
+
+      <!-- Error Message -->
+      @if (errorMessage()) {
+        <div class="mb-6 p-3 bg-[var(--error-surface)] border border-[var(--error)] text-[var(--error)] rounded-xl text-xs flex items-center gap-2 animate-slide-up">
+          <span class="material-symbols-outlined text-sm">error</span>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4 relative z-10">
+        
+        <!-- Nombre -->
+        <div>
+          <div class="relative group">
+            <input 
+              type="text" 
+              formControlName="nombre" 
+              placeholder="Nombre Completo"
+              class="w-full bg-transparent border-0 border-b border-[var(--outline)] px-1 py-2.5 text-sm font-medium text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)]/50 focus:ring-0 focus:border-[var(--primary)] transition-colors"
+              [class.border-[var(--error)]]="isFieldInvalid('nombre')"
+            />
+            <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] group-focus-within:text-[var(--primary)] transition-colors">
+              <lucide-icon [img]="User" class="w-4 h-4"></lucide-icon>
+            </div>
+          </div>
+          @if (isFieldInvalid('nombre')) {
+            <p class="text-[10px] text-[var(--error)] mt-1">El nombre es requerido.</p>
+          }
+        </div>
+
+        <!-- Correo Electrónico -->
+        <div>
+          <div class="relative group">
+            <input 
+              type="email" 
+              formControlName="email" 
+              placeholder="Correo Electrónico"
+              class="w-full bg-transparent border-0 border-b border-[var(--outline)] px-1 py-2.5 text-sm font-medium text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)]/50 focus:ring-0 focus:border-[var(--primary)] transition-colors"
+              [class.border-[var(--error)]]="isFieldInvalid('email')"
+            />
+            <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] group-focus-within:text-[var(--primary)] transition-colors">
+              <lucide-icon [img]="Mail" class="w-4 h-4"></lucide-icon>
+            </div>
+          </div>
+          @if (isFieldInvalid('email')) {
+            <p class="text-[10px] text-[var(--error)] mt-1">Ingresa un correo válido.</p>
+          }
+        </div>
+
+        <!-- Contraseña -->
+        <div>
+          <div class="relative group">
+            <input 
+              [type]="showPassword() ? 'text' : 'password'" 
+              formControlName="password" 
+              placeholder="Contraseña Segura"
+              class="w-full bg-transparent border-0 border-b border-[var(--outline)] px-1 py-2.5 pr-8 text-sm font-medium text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)]/50 focus:ring-0 focus:border-[var(--primary)] transition-colors"
+              [class.border-[var(--error)]]="isFieldInvalid('password')"
+            />
+            <button 
+              type="button" 
+              (click)="togglePassword()"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors"
+            >
+              <lucide-icon [img]="showPassword() ? EyeOff : Eye" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+          @if (isFieldInvalid('password')) {
+            <p class="text-[10px] text-[var(--error)] mt-1">Mínimo 6 caracteres.</p>
+          }
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 pt-2">
+          <!-- Nombre Casa -->
+          <div>
+            <div class="relative group">
+              <input 
+                type="text" 
+                formControlName="casa_nombre" 
+                placeholder="Nombre Hogar"
+                class="w-full bg-transparent border-0 border-b border-[var(--outline)] px-1 py-2.5 text-sm font-medium text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)]/50 focus:ring-0 focus:border-[var(--primary)] transition-colors"
+                [class.border-[var(--error)]]="isFieldInvalid('casa_nombre')"
+              />
+              <div class="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] group-focus-within:text-[var(--primary)] transition-colors">
+                <lucide-icon [img]="Home" class="w-3.5 h-3.5"></lucide-icon>
+              </div>
+            </div>
+            @if (isFieldInvalid('casa_nombre')) {
+              <p class="text-[10px] text-[var(--error)] mt-1">Requerido.</p>
+            }
+          </div>
+
+          <!-- Dirección -->
+          <div>
+            <div class="relative group">
+              <input 
+                type="text" 
+                formControlName="direccion" 
+                placeholder="Dirección (Opc.)"
+                class="w-full bg-transparent border-0 border-b border-[var(--outline)] px-1 py-2.5 text-sm font-medium text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)]/50 focus:ring-0 focus:border-[var(--primary)] transition-colors"
+              />
+              <div class="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] group-focus-within:text-[var(--primary)] transition-colors">
+                <lucide-icon [img]="MapPin" class="w-3.5 h-3.5"></lucide-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ubicación (Mapa y Geoposición) -->
+        <div class="pt-2">
+          <label class="block text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">Ubicación del Ecosistema</label>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1 relative group">
+              <input 
+                type="text" 
+                formControlName="ciudad" 
+                placeholder="Ciudad (ej. Quito)"
+                class="w-full bg-white/50 border border-black/10 text-black placeholder:text-black/30 text-sm rounded-xl focus:ring-[var(--accent)] focus:border-[var(--accent)] block px-3 py-2.5 transition-all"
+              />
+            </div>
+            <button type="button" (click)="getLocation()" class="flex items-center justify-center gap-2 bg-[var(--surface)] border border-[var(--outline)]/30 hover:border-[var(--accent)] hover:text-[#8a6a00] text-[var(--on-surface-variant)] px-3 py-2.5 rounded-xl font-medium text-sm transition-all" title="Usar mi ubicación actual">
+              <lucide-icon [img]="Compass" class="w-4 h-4"></lucide-icon>
+              <span class="hidden sm:inline">Auto</span>
+            </button>
+            <button type="button" (click)="toggleMap()" class="flex items-center justify-center gap-2 bg-[var(--surface)] border border-[var(--outline)]/30 hover:border-[var(--accent)] hover:text-[#8a6a00] text-[var(--on-surface-variant)] px-3 py-2.5 rounded-xl font-medium text-sm transition-all" [ngClass]="{'border-[var(--accent)] text-[#8a6a00] bg-[var(--accent)]/5': showMap()}">
+              <lucide-icon [img]="MapIcon" class="w-4 h-4"></lucide-icon>
+              <span class="hidden sm:inline">Mapa</span>
+            </button>
+          </div>
+
+          <!-- Contenedor del Mapa -->
+          <div [class.hidden]="!showMap()">
+            <div class="mt-3 rounded-xl overflow-hidden border border-black/10 shadow-inner h-[200px] relative animate-fade-slide-in">
+              <div id="leafletMap" class="w-full h-full z-0"></div>
+              <div class="absolute top-2 right-2 z-[1000] bg-white/90 backdrop-blur text-[10px] px-2 py-1 rounded shadow text-black/60 font-bold uppercase tracking-wider">
+                Arrastra el pin
+              </div>
+            </div>
+          </div>
+          
+          <!-- Indicador visual de coordenadas -->
+          @if (registerForm.get('latitud')?.value) {
+            <p class="text-[10px] text-[var(--primary)] mt-2 font-medium flex items-center gap-1">
+              <lucide-icon [img]="MapPin" class="w-3 h-3"></lucide-icon>
+              Ubicación guardada: {{ registerForm.get('latitud')?.value | number:'1.4-4' }}, {{ registerForm.get('longitud')?.value | number:'1.4-4' }}
+            </p>
+          }
+          
+          <!-- Inputs ocultos para coordenadas -->
+          <input type="hidden" formControlName="latitud">
+          <input type="hidden" formControlName="longitud">
+        </div>
+
+        <div class="pt-6">
+          <button 
+            type="submit" 
+            [disabled]="isLoading()"
+            class="btn btn-primary w-full py-3 rounded-xl shadow-lg shadow-[var(--primary)]/20 font-bold tracking-wide flex items-center justify-center gap-2 group overflow-hidden relative"
+          >
+            <!-- Highlight effect on hover -->
+            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            
+            @if (isLoading()) {
+              <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin relative z-10"></div>
+            } @else {
+              <span class="relative z-10">Unirse a Huellitas</span>
+              <span class="material-symbols-outlined text-sm relative z-10 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            }
+          </button>
+        </div>
+      </form>
+
+      <!-- Google OAuth -->
+      <div class="mt-6 relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-[var(--outline)]/50"></div>
+        </div>
+        <div class="relative flex justify-center text-[10px] uppercase font-bold text-[var(--on-surface-variant)]">
+          <span class="bg-white px-3">O continúa con</span>
+        </div>
+      </div>
+
+      <button 
+        type="button" 
+        (click)="loginWithGoogle()"
+        [disabled]="isLoading()"
+        class="mt-6 w-full flex items-center justify-center gap-3 py-3 px-4 border border-[var(--outline)] rounded-xl bg-white hover:bg-[var(--surface)] text-sm font-semibold text-[var(--on-surface)] transition-all shadow-sm hover:shadow-md"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Registrarse con Google
+      </button>
+
+      <button 
+        type="button" 
+        (click)="loginWithFacebook()"
+        [disabled]="isLoading()"
+        class="mt-3 w-full flex items-center justify-center gap-3 py-3 px-4 border border-[var(--outline)] rounded-xl bg-[#1877F2] hover:bg-[#166FE5] text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md"
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.938 5.826-5.938 1.622 0 2.946.155 2.946.155v3.31h-2.1c-1.637 0-1.895.836-1.895 2.043v1.992h3.95l-.578 3.667h-3.372v7.98h-4.677z"/>
+        </svg>
+        Registrarse con Facebook
+      </button>
+
+      <p class="mt-6 text-center text-[11px] text-[var(--on-surface-variant)]">
+        Al unirte, aceptas nuestros <a href="#" class="text-[var(--primary)] hover:underline">Términos</a> y <a href="#" class="text-[var(--primary)] hover:underline">Privacidad</a>.
+      </p>
+    </div>
+  </main>
+</div>

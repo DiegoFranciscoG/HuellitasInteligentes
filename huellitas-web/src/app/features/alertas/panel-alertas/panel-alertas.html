@@ -1,0 +1,145 @@
+<div class="mb-8">
+  <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Panel de Alertas</h2>
+  <p class="text-[var(--on-surface-variant)] mt-2">Centro de notificaciones y eventos críticos.</p>
+</div>
+
+<!-- ── MAIN VIEW ── -->
+@if (isLoading()) {
+  <div class="flex items-center justify-center h-64">
+    <div class="text-center">
+      <div class="w-12 h-12 border-4 border-[var(--outline)]/30 border-t-[var(--primary)] rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-sm text-[var(--on-surface-variant)]">Cargando alertas...</p>
+    </div>
+  </div>
+} @else {
+  
+  <div class="card p-6 min-h-[500px] animate-fade-slide-in">
+    <!-- Header / Filters -->
+    <div class="flex flex-wrap gap-4 items-center justify-between mb-8">
+      <div class="flex gap-2">
+        <button 
+          class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all"
+          [class.bg-[var(--primary)]]="filtroActual() === 'TODAS'"
+          [class.text-white]="filtroActual() === 'TODAS'"
+          [class.bg-[var(--surface)]]="filtroActual() !== 'TODAS'"
+          [class.border]="filtroActual() !== 'TODAS'"
+          [class.border-[var(--outline)]/30]="filtroActual() !== 'TODAS'"
+          [class.text-[var(--on-surface-variant)]]="filtroActual() !== 'TODAS'"
+          (click)="filtroActual.set('TODAS')"
+        >
+          Todas
+        </button>
+        <button 
+          class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all relative"
+          [class.bg-[var(--primary)]]="filtroActual() === 'NO_LEIDAS'"
+          [class.text-white]="filtroActual() === 'NO_LEIDAS'"
+          [class.bg-[var(--surface)]]="filtroActual() !== 'NO_LEIDAS'"
+          [class.border]="filtroActual() !== 'NO_LEIDAS'"
+          [class.border-[var(--outline)]/30]="filtroActual() !== 'NO_LEIDAS'"
+          [class.text-[var(--on-surface-variant)]]="filtroActual() !== 'NO_LEIDAS'"
+          (click)="filtroActual.set('NO_LEIDAS')"
+        >
+          No Leídas
+          @if (nuevasCount > 0) {
+            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--error)] text-[9px] text-white">
+              {{ nuevasCount }}
+            </span>
+          }
+        </button>
+      </div>
+      
+      @if (nuevasCount > 0) {
+        <button 
+          class="text-xs font-bold text-[var(--primary)] hover:text-[#8a6a00] hover:underline flex items-center gap-1 transition-colors"
+          (click)="marcarTodasLeidas()"
+        >
+          <lucide-icon [img]="CheckCheck" class="w-4 h-4"></lucide-icon> Marcar todas como leídas
+        </button>
+      }
+    </div>
+
+    <!-- Alert List -->
+    <div class="space-y-4 stagger-cards">
+      @for (alerta of filtradas; track alerta.id) {
+        <div
+          (click)="abrirDispositivoDeAlerta(alerta)"
+          class="p-5 rounded-2xl border-l-4 shadow-sm transition-all hover:shadow-md group flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+          [class.cursor-pointer]="alerta.dispositivo_id"
+          [ngClass]="{
+            'border-[var(--error)] bg-[rgba(186,26,26,0.4)]': alerta.severidad === 'CRITICA' && !alerta.leida,
+            'border-[var(--accent)] bg-[rgba(253,192,3,0.4)]': alerta.severidad === 'ADVERTENCIA' && !alerta.leida,
+            'border-[var(--primary)] bg-[rgba(27,48,34,0.4)]': alerta.severidad === 'INFO' && !alerta.leida,
+            'border-[var(--outline)]/20 bg-[var(--surface)] opacity-70': alerta.leida
+          }"
+        >
+          <div class="flex gap-4 items-start w-full sm:w-auto">
+            <div 
+              class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+              [ngClass]="{
+                'bg-[var(--error-surface)] text-[var(--error)]': alerta.severidad === 'CRITICA' && !alerta.leida,
+                'bg-[rgba(253,192,3,0.15)] text-[#8a6a00]': alerta.severidad === 'ADVERTENCIA' && !alerta.leida,
+                'bg-[var(--primary-surface)] text-[var(--primary)]': alerta.severidad === 'INFO' && !alerta.leida,
+                'bg-black/5 text-[var(--on-surface-variant)]': alerta.leida
+              }"
+            >
+              <lucide-icon [img]="getIcon(alerta)" class="w-5 h-5"></lucide-icon>
+            </div>
+            
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="font-semibold text-sm sm:text-base text-[var(--primary)]" [class.font-medium]="alerta.leida">
+                  {{ alerta.mensaje }}
+                </h3>
+                @if (!alerta.leida) {
+                  <span class="w-2 h-2 rounded-full bg-[var(--error)] animate-pulse hidden sm:block"></span>
+                }
+              </div>
+              <p class="text-xs sm:text-sm text-[var(--on-surface-variant)] leading-relaxed max-w-2xl hidden">
+              </p>
+              <div class="flex items-center gap-3 mt-2 sm:hidden">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-variant)] opacity-80">{{ alerta.ts | date:'short' }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                  [ngClass]="{
+                    'bg-[var(--error-surface)] text-[var(--error)]': alerta.severidad === 'CRITICA' && !alerta.leida,
+                    'bg-[rgba(253,192,3,0.15)] text-[#8a6a00]': alerta.severidad === 'ADVERTENCIA' && !alerta.leida,
+                    'bg-[var(--primary-surface)] text-[var(--primary)]': alerta.severidad === 'INFO' && !alerta.leida,
+                    'bg-black/5 text-[var(--on-surface-variant)]': alerta.leida
+                  }">{{ alerta.severidad }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="hidden sm:flex flex-col items-end gap-2 min-w-[120px]">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-variant)] opacity-80">{{ alerta.ts | date:'short' }}</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                  [ngClass]="{
+                    'bg-[var(--error-surface)] text-[var(--error)]': alerta.severidad === 'CRITICA' && !alerta.leida,
+                    'bg-[rgba(253,192,3,0.15)] text-[#8a6a00]': alerta.severidad === 'ADVERTENCIA' && !alerta.leida,
+                    'bg-[var(--primary-surface)] text-[var(--primary)]': alerta.severidad === 'INFO' && !alerta.leida,
+                    'bg-black/5 text-[var(--on-surface-variant)]': alerta.leida
+                  }">{{ alerta.severidad }}</span>
+            
+            @if (!alerta.leida) {
+              <button 
+                class="mt-1 text-[10px] font-bold text-[var(--primary)] hover:text-[#8a6a00] transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1"
+                (click)="marcarLeida(alerta.id)"
+              >
+                <lucide-icon [img]="CheckCheck" class="w-3 h-3"></lucide-icon> Marcar leída
+              </button>
+            }
+          </div>
+        </div>
+      }
+      
+      @if (filtradas.length === 0) {
+        <div class="text-center py-16">
+          <div class="w-20 h-20 bg-[var(--primary-surface)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <lucide-icon [img]="CheckCheck" class="w-10 h-10 text-[var(--primary)]"></lucide-icon>
+          </div>
+          <h3 class="font-serif text-xl text-[var(--primary)] font-bold mb-1">Todo está tranquilo</h3>
+          <p class="text-sm text-[var(--on-surface-variant)]">No tienes alertas pendientes en este momento.</p>
+        </div>
+      }
+    </div>
+  </div>
+}

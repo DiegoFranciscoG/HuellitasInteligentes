@@ -1,0 +1,397 @@
+<!-- Encabezado -->
+<div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div>
+    <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Cámaras de Seguridad</h2>
+    <p class="text-[var(--on-surface-variant)] mt-2">
+      Monitorea tu hogar en tiempo real y elige qué mascota vigila cada cámara.
+      <span *ngIf="camaras().length > 0"
+        class="ml-2 inline-flex items-center gap-1 bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-bold px-2 py-0.5 rounded-full">
+        {{ camaras().length }} {{ camaras().length === 1 ? 'cámara' : 'cámaras' }}
+      </span>
+    </p>
+  </div>
+  <div class="flex items-center gap-3">
+    <button (click)="cargarCamaras()"
+      class="px-4 py-2.5 rounded-2xl border border-[var(--outline)]/20 text-[var(--primary)] hover:bg-[var(--primary)]/5 transition-colors flex items-center gap-2 font-medium">
+      <lucide-icon [name]="RefreshCw" [size]="18" [class.animate-spin]="cargando()"></lucide-icon>
+      <span class="hidden sm:inline">Actualizar</span>
+    </button>
+    <button (click)="abrirModalAgregar()"
+      class="btn btn-primary px-5 py-2.5 rounded-2xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+      <lucide-icon [name]="Plus" [size]="18"></lucide-icon>
+      <span>Agregar Cámara</span>
+    </button>
+  </div>
+</div>
+
+<!-- Cargando -->
+<div *ngIf="cargando()" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div *ngFor="let i of [1,2]"
+    class="bg-[var(--surface)] rounded-3xl border border-[var(--outline)]/20 overflow-hidden animate-pulse">
+    <div class="p-5 border-b border-[var(--outline)]/10 h-16"></div>
+    <div class="aspect-video bg-[var(--primary)]/5 flex items-center justify-center">
+      <lucide-icon [name]="CameraIcon" [size]="40" class="text-[var(--primary)]/20"></lucide-icon>
+    </div>
+  </div>
+</div>
+
+<!-- Error -->
+<div *ngIf="error()"
+  class="bg-[var(--error-surface)] border border-[var(--error)] rounded-3xl p-8 flex flex-col items-center text-center gap-4">
+  <div class="w-14 h-14 rounded-2xl bg-[var(--error-surface)] flex items-center justify-center text-[var(--error)]">
+    <lucide-icon [name]="AlertCircle" [size]="28"></lucide-icon>
+  </div>
+  <div>
+    <h3 class="font-serif text-lg font-bold text-[var(--error)]">No pudimos conectar</h3>
+    <p class="text-[rgba(186,26,26,0.8)] mt-1 max-w-md">{{ error() }}</p>
+  </div>
+  <button (click)="cargarCamaras()"
+    class="btn btn-primary px-5 py-2.5 rounded-2xl flex items-center gap-2">
+    <lucide-icon [name]="RefreshCw" [size]="18"></lucide-icon> Reintentar
+  </button>
+</div>
+
+<!-- Sin cámaras -->
+<div *ngIf="!cargando() && !error() && camaras().length === 0"
+  class="bg-[var(--surface)] rounded-3xl border border-[var(--outline)]/20 p-12 flex flex-col items-center text-center gap-4">
+  <div class="w-20 h-20 rounded-3xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
+    <lucide-icon [name]="EyeOff" [size]="36"></lucide-icon>
+  </div>
+  <div>
+    <h3 class="font-serif text-xl font-bold text-[var(--primary)]">Todavía no tienes cámaras</h3>
+    <p class="text-[var(--on-surface-variant)] mt-2 max-w-md">
+      Puedes convertir un celular que ya no uses en una cámara de vigilancia. Solo toma un minuto.
+    </p>
+  </div>
+  <button (click)="abrirModalAgregar()"
+    class="btn btn-primary px-5 py-2.5 rounded-2xl flex items-center gap-2 shadow-md">
+    <lucide-icon [name]="Plus" [size]="18"></lucide-icon> Agregar mi primera cámara
+  </button>
+</div>
+
+<!-- Rejilla de cámaras -->
+<div *ngIf="!cargando() && camaras().length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div *ngFor="let camara of camaras()"
+    class="bg-[var(--surface)] rounded-3xl border border-[var(--outline)]/20 overflow-hidden hover:shadow-lg transition-shadow group">
+
+    <!-- Cabecera de la tarjeta -->
+    <div class="p-5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
+          <lucide-icon [name]="VideoIcon" [size]="20"></lucide-icon>
+        </div>
+        <div class="min-w-0">
+          <h3 class="font-serif text-lg font-bold text-[var(--primary)] truncate">{{ camara.nombre }}</h3>
+          <span class="inline-flex items-center gap-1.5 text-xs font-bold"
+            [ngClass]="camara.conectada ? 'text-[var(--primary)]' : 'text-gray-400'">
+            <span class="w-1.5 h-1.5 rounded-full"
+              [ngClass]="camara.conectada ? 'bg-[var(--primary)] animate-pulse' : 'bg-gray-300'"></span>
+            {{ camara.conectada ? 'En vivo' : 'Desconectada' }}
+          </span>
+        </div>
+      </div>
+      <button (click)="maximizar(camara)" title="Ver en pantalla completa"
+        class="p-2.5 rounded-2xl text-[var(--on-surface-variant)] hover:bg-[var(--primary)]/5 hover:text-[var(--primary)] transition-colors shrink-0">
+        <lucide-icon [name]="Maximize2" [size]="18"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Mascota vigilada -->
+    <div class="px-5 pb-4 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-[var(--accent)]/10 border border-[var(--outline)]/10 flex items-center justify-center overflow-hidden shrink-0">
+        <img *ngIf="camara.perroFotoUrl" [src]="camara.perroFotoUrl | mediaUrl"
+          [alt]="camara.perroNombre || ''" class="w-full h-full object-cover">
+        <lucide-icon *ngIf="!camara.perroFotoUrl" [name]="Dog" [size]="16"
+          class="text-[var(--on-surface-variant)]"></lucide-icon>
+      </div>
+      <label class="text-sm text-[var(--on-surface-variant)] shrink-0" [attr.for]="'mascota-camara-' + camara.id">
+        Vigila a
+      </label>
+      <!-- La selección va en cada <option> y no en [value] del <select>:
+           Angular aplica los bindings del select antes de crear las options,
+           así que un [value] se perdería y el desplegable saldría vacío. -->
+      <select
+        [id]="'mascota-camara-' + camara.id"
+        (change)="asignarMascota(camara, $any($event.target).value)"
+        [disabled]="asignandoMascota() === camara.id"
+        class="flex-1 min-w-0 bg-white border border-[var(--outline)]/20 text-sm text-[var(--primary)] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)] disabled:opacity-50 transition-colors">
+        <option value="" [selected]="!camara.perroId">Sin asignar</option>
+        <option *ngFor="let perro of perros()" [value]="perro.id" [selected]="perro.id === camara.perroId">
+          {{ perro.nombre }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Video -->
+    <div class="relative aspect-video bg-[#101410] w-full overflow-hidden flex items-center justify-center">
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-white/30 gap-2">
+        <lucide-icon [name]="VideoIcon" [size]="28"></lucide-icon>
+        <span class="text-sm">Conectando…</span>
+      </div>
+
+      <ng-container *ngIf="!isWebRtc(camara.urlStream)">
+        <img [src]="getSafeUrl(camara.urlStream)" [alt]="'Transmisión de ' + camara.nombre"
+          class="relative z-10 w-full h-full object-cover" onerror="this.style.display='none'" />
+        <div class="absolute top-3 right-3 z-20 flex gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-xs font-bold text-white flex items-center gap-1.5">
+            <lucide-icon [name]="Shield" [size]="12"></lucide-icon> Seguro
+          </span>
+        </div>
+      </ng-container>
+
+      <app-web-rtc-video *ngIf="isWebRtc(camara.urlStream)" [targetStream]="camara.urlStream"
+        class="relative z-10 w-full h-full"></app-web-rtc-video>
+    </div>
+  </div>
+</div>
+
+<!-- Pantalla completa -->
+<div *ngIf="camaraMaximizada()"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+  <div class="w-full max-w-6xl bg-[var(--surface)] rounded-3xl overflow-hidden shadow-2xl">
+    <div class="p-5 flex items-center justify-between border-b border-[var(--outline)]/10">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
+          <lucide-icon [name]="VideoIcon" [size]="20"></lucide-icon>
+        </div>
+        <h2 class="font-serif text-xl font-bold text-[var(--primary)] truncate">{{ camaraMaximizada()?.nombre }}</h2>
+        <span *ngIf="camaraMaximizada()?.perroNombre"
+          class="px-2.5 py-0.5 rounded-full bg-[var(--accent)]/15 text-[var(--primary)] text-xs font-bold flex items-center gap-1.5 shrink-0">
+          <lucide-icon [name]="Dog" [size]="12"></lucide-icon> {{ camaraMaximizada()?.perroNombre }}
+        </span>
+      </div>
+      <button (click)="cerrarMaximizada()"
+        class="p-2.5 rounded-2xl text-[var(--on-surface-variant)] hover:bg-[var(--primary)]/5 hover:text-[var(--primary)] transition-colors">
+        <lucide-icon [name]="XIcon" [size]="22"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="aspect-video w-full bg-[#101410] relative flex items-center justify-center">
+      <ng-container *ngIf="!isWebRtc(camaraMaximizada()?.urlStream || '')">
+        <lucide-icon [name]="VideoIcon" [size]="56" class="text-white/10 absolute"></lucide-icon>
+        <img *ngIf="camaraMaximizada()?.urlStream" [src]="getSafeUrl(camaraMaximizada()!.urlStream)"
+          class="w-full h-full object-contain relative z-20" />
+      </ng-container>
+      <app-web-rtc-video *ngIf="isWebRtc(camaraMaximizada()?.urlStream || '')"
+        [targetStream]="camaraMaximizada()!.urlStream" class="relative z-20 w-full h-full"></app-web-rtc-video>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar cámara -->
+<div *ngIf="mostrarModalAgregar()"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]">
+
+    <div class="p-6 flex items-center justify-between border-b border-[var(--outline)]/10 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center">
+          <lucide-icon [name]="Smartphone" [size]="20"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="font-serif text-xl font-bold text-[var(--primary)]">Agregar Cámara</h3>
+          <p class="text-sm text-[var(--on-surface-variant)]">Usa un celular como cámara o busca un dispositivo del hogar</p>
+        </div>
+      </div>
+      <button (click)="cerrarModalAgregar()"
+        class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+        <lucide-icon [name]="XIcon" [size]="22"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Pestañas: QR o búsqueda en la red del hogar -->
+    <div *ngIf="!qrGenerado()" class="px-6 pt-4 shrink-0">
+      <div class="flex gap-1 p-1 bg-[var(--primary)]/5 rounded-2xl">
+        <button (click)="cambiarPestana('qr')"
+          [class]="pestanaAlta() === 'qr'
+            ? 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white shadow-sm font-bold text-sm text-[var(--primary)]'
+            : 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm text-[var(--on-surface-variant)] hover:text-[var(--primary)]'">
+          <lucide-icon [name]="Smartphone" [size]="16"></lucide-icon>
+          Vincular con QR
+        </button>
+        <button (click)="cambiarPestana('red')"
+          [class]="pestanaAlta() === 'red'
+            ? 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white shadow-sm font-bold text-sm text-[var(--primary)]'
+            : 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm text-[var(--on-surface-variant)] hover:text-[var(--primary)]'">
+          <lucide-icon [name]="Wifi" [size]="16"></lucide-icon>
+          Buscar en mi red
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+      <!-- ══════════ Pestaña: buscar dispositivos del hogar ══════════ -->
+      <ng-container *ngIf="!qrGenerado() && pestanaAlta() === 'red'">
+        <div class="flex items-start gap-3 p-4 rounded-2xl bg-[var(--primary)]/5">
+          <lucide-icon [name]="Wifi" [size]="18" class="text-[var(--primary)] mt-0.5 shrink-0"></lucide-icon>
+          <p class="text-sm text-[var(--on-surface-variant)]">
+            Aparecen los dispositivos de tu hogar que se reportaron en los últimos
+            <strong class="text-[var(--primary)]">{{ ventanaPresencia() }} segundos</strong>.
+            Si no ves el tuyo, revisa que esté encendido y conectado al WiFi.
+          </p>
+        </div>
+
+        <!-- Caja del Código de Vivienda -->
+        <div class="p-4 rounded-2xl border border-[var(--outline)]/20 bg-[var(--surface-cream)]">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-bold text-[var(--primary)]">Código de Vivienda</label>
+            <button (click)="regenerarCodigo()" [disabled]="cargandoCodigo()"
+                    class="text-xs font-semibold text-[var(--error)] hover:bg-[var(--error)]/10 px-2 py-1 rounded-lg transition-colors flex items-center gap-1">
+              <lucide-icon *ngIf="cargandoCodigo()" [name]="Loader" [size]="14" class="animate-spin"></lucide-icon>
+              <lucide-icon *ngIf="!cargandoCodigo()" [name]="RefreshCw" [size]="14"></lucide-icon>
+              Regenerar si se filtró
+            </button>
+          </div>
+          <p class="text-xs text-[var(--on-surface-variant)] mb-3">
+            Este código identifica tu casa ante los dispositivos IoT (ESP32). Cópialo y pégalo en el firmware de tus placas. No lo compartas con nadie.
+          </p>
+          <div class="flex items-center gap-2">
+            <code class="flex-1 bg-white border border-[var(--outline)]/20 p-2.5 rounded-xl text-xs font-mono text-[var(--primary)] break-all select-all shadow-sm">
+              {{ codigoVinculacion() || 'Cargando...' }}
+            </code>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-[var(--primary)] mb-2">Nombre para la cámara</label>
+          <input type="text" [(ngModel)]="nuevaCamaraNombre" placeholder="Ej: Sala principal, Patio trasero"
+            class="w-full border border-[var(--outline)]/20 rounded-2xl py-3 px-4 text-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)] transition-colors">
+        </div>
+
+        <div *ngIf="errorBusqueda()" class="flex items-center gap-2 p-3 rounded-2xl bg-[var(--error)]/10 text-[var(--error)] text-sm">
+          <lucide-icon [name]="AlertCircle" [size]="16"></lucide-icon>
+          {{ errorBusqueda() }}
+        </div>
+
+        <div *ngIf="buscandoDispositivos()" class="flex flex-col items-center gap-3 py-8 text-[var(--on-surface-variant)]">
+          <lucide-icon [name]="Loader" [size]="28" class="animate-spin text-[var(--primary)]"></lucide-icon>
+          <span class="text-sm">Buscando dispositivos en tu hogar…</span>
+        </div>
+
+        <div *ngIf="!buscandoDispositivos() && yaBusco() && dispositivosEncontrados().length === 0"
+          class="flex flex-col items-center gap-3 py-8 text-center">
+          <lucide-icon [name]="Cpu" [size]="30" class="text-[var(--on-surface-variant)]/40"></lucide-icon>
+          <div>
+            <p class="font-bold text-[var(--primary)]">No encontramos dispositivos</p>
+            <p class="text-sm text-[var(--on-surface-variant)] max-w-xs mt-1">
+              Enciende el dispositivo y espera unos segundos, o vincula un celular con el código QR.
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="!buscandoDispositivos() && dispositivosEncontrados().length > 0" class="space-y-2">
+          <button *ngFor="let d of dispositivosEncontrados()"
+            (click)="vincularDispositivo(d)"
+            [disabled]="guardandoCamara() || d.propiedad === 'OCUPADO'"
+            class="w-full flex items-center justify-between gap-3 p-4 rounded-2xl border border-[var(--outline)]/15 transition-colors text-left disabled:opacity-60 disabled:cursor-not-allowed enabled:hover:border-[var(--primary)] enabled:hover:bg-[var(--primary)]/5">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                [class]="d.propiedad === 'OCUPADO'
+                  ? 'bg-[var(--on-surface-variant)]/10 text-[var(--on-surface-variant)]'
+                  : 'bg-[var(--primary)]/10 text-[var(--primary)]'">
+                <lucide-icon [name]="Cpu" [size]="18"></lucide-icon>
+              </div>
+              <div class="min-w-0">
+                <p class="font-bold truncate"
+                  [class]="d.propiedad === 'OCUPADO' ? 'text-[var(--on-surface-variant)]' : 'text-[var(--primary)]'">
+                  {{ d.modelo || d.mac_address }}
+                </p>
+                <p class="text-xs text-[var(--on-surface-variant)] truncate">
+                  {{ d.mac_address }} · activo hace {{ d.hace_segundos }}s
+                  <span *ngIf="d.ip_local"> · {{ d.ip_local }}</span>
+                </p>
+                <p *ngIf="d.propiedad === 'OCUPADO'" class="text-xs text-[var(--on-surface-variant)] mt-0.5">
+                  Ya está vinculado a otra cuenta.
+                </p>
+              </div>
+            </div>
+            <span class="text-xs font-bold shrink-0"
+              [class]="d.propiedad === 'OCUPADO' ? 'text-[var(--on-surface-variant)]' : 'text-[var(--primary)]'">
+              {{ d.propiedad === 'OCUPADO' ? 'Ocupado' : (d.propiedad === 'LIBRE' ? 'Añadir' : 'Vincular') }}
+            </span>
+          </button>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="!qrGenerado() && pestanaAlta() === 'qr'">
+        <!-- Pasos -->
+        <ol class="space-y-3">
+          <li class="flex gap-4 items-start p-4 rounded-2xl bg-[var(--primary)]/5">
+            <span class="w-7 h-7 rounded-full bg-[var(--primary)] text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
+            <div>
+              <p class="font-bold text-[var(--primary)]">Instala Huellitas</p>
+              <p class="text-sm text-[var(--on-surface-variant)]">En el celular que usarás como cámara, abre la app de Huellitas.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 items-start p-4 rounded-2xl bg-[var(--primary)]/5">
+            <span class="w-7 h-7 rounded-full bg-[var(--primary)] text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
+            <div>
+              <p class="font-bold text-[var(--primary)]">Elige "Vincular Cámara"</p>
+              <p class="text-sm text-[var(--on-surface-variant)]">Está en la pantalla de inicio de la app móvil.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 items-start p-4 rounded-2xl bg-[var(--primary)]/5">
+            <span class="w-7 h-7 rounded-full bg-[var(--primary)] text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
+            <div>
+              <p class="font-bold text-[var(--primary)]">Escanea el código</p>
+              <p class="text-sm text-[var(--on-surface-variant)]">Genera el QR aquí abajo y escanéalo con ese celular.</p>
+            </div>
+          </li>
+        </ol>
+
+        <div>
+          <label class="block text-sm font-bold text-[var(--primary)] mb-2">¿Dónde estará la cámara?</label>
+          <input type="text" [(ngModel)]="nuevaCamaraNombre" placeholder="Ej: Sala principal, Patio trasero"
+            class="w-full border border-[var(--outline)]/20 rounded-2xl py-3 px-4 text-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)] transition-colors">
+        </div>
+      </ng-container>
+
+      <!-- QR generado -->
+      <div *ngIf="qrGenerado()" class="flex flex-col items-center gap-5 py-2 text-center">
+        <div>
+          <h4 class="font-serif text-xl font-bold text-[var(--primary)]">¡Casi listo!</h4>
+          <p class="text-[var(--on-surface-variant)] mt-1 max-w-sm">
+            Escanea este código desde la app del celular que usarás como cámara.
+          </p>
+        </div>
+        <div class="bg-white p-4 rounded-3xl border border-[var(--outline)]/20 shadow-md">
+          <img [src]="qrGenerado()" alt="Código QR de vinculación" class="w-56 h-56 object-contain">
+        </div>
+        <span class="inline-flex items-center gap-2 text-sm font-medium text-[var(--primary)] bg-[var(--primary)]/5 px-4 py-2 rounded-full">
+          <lucide-icon [name]="Shield" [size]="16"></lucide-icon> Conexión cifrada de extremo a extremo
+        </span>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-[var(--outline)]/10 shrink-0 flex justify-end gap-3">
+      <ng-container *ngIf="!qrGenerado() && pestanaAlta() === 'qr'">
+        <button (click)="cerrarModalAgregar()"
+          class="px-5 py-2.5 rounded-2xl font-medium text-[var(--on-surface-variant)] hover:bg-gray-100 transition-colors">
+          Cancelar
+        </button>
+        <button (click)="guardarCamara()" [disabled]="!nuevaCamaraNombre() || guardandoCamara()"
+          class="btn btn-primary px-5 py-2.5 rounded-2xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <lucide-icon [name]="RefreshCw" [size]="18" class="animate-spin" *ngIf="guardandoCamara()"></lucide-icon>
+          <lucide-icon [name]="Check" [size]="18" *ngIf="!guardandoCamara()"></lucide-icon>
+          <span>Generar QR</span>
+        </button>
+      </ng-container>
+      <ng-container *ngIf="!qrGenerado() && pestanaAlta() === 'red'">
+        <button (click)="cerrarModalAgregar()"
+          class="px-5 py-2.5 rounded-2xl font-medium text-[var(--on-surface-variant)] hover:bg-gray-100 transition-colors">
+          Cancelar
+        </button>
+        <button (click)="buscarEnRed()" [disabled]="buscandoDispositivos()"
+          class="btn btn-primary px-5 py-2.5 rounded-2xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <lucide-icon [name]="RefreshCw" [size]="18" [class.animate-spin]="buscandoDispositivos()"></lucide-icon>
+          <span>Buscar de nuevo</span>
+        </button>
+      </ng-container>
+      <button *ngIf="qrGenerado()" (click)="cerrarModalAgregar()"
+        class="btn btn-primary w-full px-5 py-2.5 rounded-2xl flex justify-center items-center gap-2">
+        <lucide-icon [name]="Check" [size]="18"></lucide-icon>
+        <span>Listo, ya lo escaneé</span>
+      </button>
+    </div>
+  </div>
+</div>

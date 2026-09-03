@@ -1,0 +1,60 @@
+<div class="min-h-screen bg-[var(--surface-cream)] flex flex-col">
+
+  <!-- Cabecera simple, coherente con el resto del sitio público -->
+  <header class="px-6 h-20 flex items-center">
+    <a routerLink="/" class="flex items-center gap-2 group">
+      <span class="material-symbols-outlined text-[var(--primary)] text-2xl icon-filled transition-transform group-hover:scale-110">schedule</span>
+      <span class="font-serif text-xl font-bold text-[var(--primary)] tracking-tight">Huellitas</span>
+    </a>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center px-6 py-16">
+    <div class="max-w-md w-full text-center">
+      <div class="w-20 h-20 rounded-3xl bg-[var(--primary)] flex items-center justify-center mx-auto mb-8 shadow-lg">
+        <span class="material-symbols-outlined icon-filled text-white text-4xl">android</span>
+      </div>
+
+      <h1 class="font-serif text-3xl lg:text-4xl text-[var(--primary)] mb-4">
+        Huellitas para <em>Android</em>
+      </h1>
+      <p class="text-[var(--on-surface-variant)] mb-10">
+        Controla el IoT de tu vivienda, mira tus cámaras y cuida a tus mascotas desde el celular.
+      </p>
+
+      @if (apkUrl) {
+        <a [href]="apkUrl" download="HuellitasInteligentes.apk"
+           class="btn btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-base px-8 py-4">
+          <span class="material-symbols-outlined icon-filled">download</span>
+          Descargar APK
+        </a>
+        <p class="text-xs text-[var(--on-surface-variant)] mt-4">Android 8.0 o superior · ~105 MB</p>
+
+        <ol class="text-left mt-8 space-y-3">
+          <li class="flex gap-3 items-start p-3 rounded-2xl bg-[var(--surface)]">
+            <span class="w-6 h-6 rounded-full bg-[var(--primary)] text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+            <p class="text-sm text-[var(--on-surface-variant)]">Descarga el APK con el botón de arriba.</p>
+          </li>
+          <li class="flex gap-3 items-start p-3 rounded-2xl bg-[var(--surface)]">
+            <span class="w-6 h-6 rounded-full bg-[var(--primary)] text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+            <p class="text-sm text-[var(--on-surface-variant)]">Si Android lo bloquea, activa "Permitir de esta fuente" cuando te lo pida.</p>
+          </li>
+          <li class="flex gap-3 items-start p-3 rounded-2xl bg-[var(--surface)]">
+            <span class="w-6 h-6 rounded-full bg-[var(--primary)] text-white text-xs font-bold flex items-center justify-center shrink-0">3</span>
+            <p class="text-sm text-[var(--on-surface-variant)]">Instala y abre la app.</p>
+          </li>
+        </ol>
+      } @else {
+        <div class="card p-6 text-left">
+          <p class="text-sm font-semibold text-[var(--primary)] mb-1">Aún no hay una versión publicada aquí.</p>
+          <p class="text-sm text-[var(--on-surface-variant)]">
+            Vuelve a intentarlo en un momento, o pide el instalador directamente al equipo de Huellitas.
+          </p>
+        </div>
+      }
+
+      <a routerLink="/" class="block mt-10 text-sm font-semibold text-[var(--primary)] hover:opacity-70 transition-opacity">
+        ← Volver al inicio
+      </a>
+    </div>
+  </main>
+</div>

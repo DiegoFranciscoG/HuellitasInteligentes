@@ -1,0 +1,265 @@
+<div class="min-h-screen relative flex items-center justify-center overflow-hidden">
+  
+  <!-- Background Image -->
+  <div class="absolute inset-0 z-0">
+    <img
+      src="auth-bg/login-bg.jpg"
+      alt="Perros felices mirando hacia arriba"
+      class="w-full h-full object-cover"
+    >
+    <div class="absolute inset-0 bg-[var(--primary)]/30 backdrop-blur-[2px]"></div>
+  </div>
+
+  <!-- Top Navigation -->
+  <header class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-6">
+    <a routerLink="/" class="text-white font-bold text-3xl tracking-wide font-serif">Huellitas</a>
+  </header>
+
+  <!-- Login Modal Card -->
+  <div class="relative z-10 w-full max-w-[420px] p-8 md:p-10 mx-4 transition-transform duration-500 hover:scale-[1.01] animate-scale-in"
+       style="background: rgba(255, 250, 237, 0.45); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.4); border: 1px solid rgba(255, 255, 255, 0.3);">
+    
+    <!-- Botón de Cerrar (X): un <a routerLink> real en vez de (click), igual
+         que el de Registrar, para que sea un enlace de verdad (funciona con
+         click derecho > abrir, medio-click, y no depende de que el binding
+         del evento (click) se haya enganchado a tiempo). -->
+    <a routerLink="/" class="absolute top-4 right-4 p-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-light)] transition-colors shadow-md z-30 cursor-pointer">
+      <lucide-icon [img]="XIcon" class="w-4 h-4"></lucide-icon>
+    </a>
+
+    <h1 class="font-serif text-4xl text-[var(--primary)] font-bold text-center mb-6 drop-shadow-sm">
+      {{ showQrMode() ? 'Acceso con QR' : 'Login' }}
+    </h1>
+
+    <!-- Selector de modo (Password vs QR) -->
+    <div class="flex rounded-xl bg-white/40 p-1 mb-6 border border-white/30">
+      <button 
+        type="button" 
+        (click)="showQrMode.set(false)"
+        class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all"
+        [class.bg-[var(--primary)]]="!showQrMode()"
+        [class.text-white]="!showQrMode()"
+        [class.text-[var(--primary)]]="showQrMode()"
+      >
+        Email / Clave
+      </button>
+      <button 
+        type="button" 
+        (click)="showQrMode.set(true)"
+        class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1"
+        [class.bg-[var(--primary)]]="showQrMode()"
+        [class.text-white]="showQrMode()"
+        [class.text-[var(--primary)]]="!showQrMode()"
+      >
+        <lucide-icon [img]="QrCodeIcon" class="w-3.5 h-3.5"></lucide-icon> Ingresar con QR
+      </button>
+    </div>
+
+    @if (!showQrMode()) {
+      <!-- FORMULARIO TRADICIONAL -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6" novalidate>
+        
+        <!-- Email Field -->
+        <div class="relative group">
+          <label class="text-xs font-semibold text-[var(--primary)] mb-1 block">Email</label>
+          <div class="relative flex items-center border-b-2 border-[var(--primary)]/40 group-hover:border-[var(--primary)] transition-colors">
+            <input
+              id="login-email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="w-full bg-transparent border-none px-0 py-2.5 text-[var(--primary)] placeholder-[var(--primary)]/50 focus:ring-0 focus:outline-none text-sm font-medium"
+              [class.border-[var(--error)]]="isFieldInvalid('email')"
+              placeholder="tu@correo.com"
+            >
+            <lucide-icon [img]="MailIcon" class="w-4 h-4 text-[var(--primary)] absolute right-2"></lucide-icon>
+          </div>
+          @if (isFieldInvalid('email')) {
+            <p class="text-[var(--error)] text-xs mt-1.5 absolute -bottom-5">
+              @if (loginForm.get('email')?.errors?.['required']) { Requerido. }
+              @if (loginForm.get('email')?.errors?.['email']) { Correo inválido. }
+            </p>
+          }
+        </div>
+
+        <!-- Password Field -->
+        <div class="relative group pt-2">
+          <label class="text-xs font-semibold text-[var(--primary)] mb-1 block">Password</label>
+          <div class="relative flex items-center border-b-2 border-[var(--primary)]/40 group-hover:border-[var(--primary)] transition-colors">
+            <input
+              id="login-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              class="w-full bg-transparent border-none px-0 py-2.5 text-[var(--primary)] placeholder-[var(--primary)]/50 focus:ring-0 focus:outline-none text-sm font-medium"
+              [class.border-[var(--error)]]="isFieldInvalid('password')"
+              placeholder="••••••••"
+            >
+            <button type="button" (click)="togglePassword()" class="absolute right-2 text-[var(--primary)] hover:opacity-70 transition-opacity">
+              <lucide-icon [img]="LockIcon" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+          @if (isFieldInvalid('password')) {
+            <p class="text-[var(--error)] text-xs mt-1.5 absolute -bottom-5">
+              @if (loginForm.get('password')?.errors?.['required']) { Requerido. }
+              @if (loginForm.get('password')?.errors?.['minlength']) { Mínimo 6 caracteres. }
+            </p>
+          }
+        </div>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="flex items-center justify-between pt-2">
+          <label class="flex items-center gap-2 cursor-pointer group/chk">
+            <input type="checkbox" formControlName="rememberMe" class="w-3.5 h-3.5 rounded border-[var(--primary)] text-[var(--primary)] focus:ring-[var(--primary)] bg-transparent">
+            <span class="text-xs font-medium text-[var(--primary)] group-hover/chk:text-[var(--primary-light)] transition-colors">Remember me</span>
+          </label>
+          <a routerLink="/auth/forgot-password" class="text-xs font-medium text-[var(--primary)] hover:underline opacity-80">Forgot Password?</a>
+        </div>
+
+        <!-- Global Error -->
+        @if (errorMessage()) {
+          <div class="bg-[rgba(186,26,26,0.9)] backdrop-blur-md rounded-lg p-3 text-center animate-scale-in shadow-lg">
+            <p class="text-xs text-white font-medium">{{ errorMessage() }}</p>
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          id="login-submit"
+          [disabled]="isLoading()"
+          class="w-full bg-[var(--primary)] hover:bg-[var(--primary-light)] text-white rounded-lg py-3.5 text-sm font-semibold tracking-wide transition-all duration-300 shadow-xl disabled:opacity-70 flex justify-center items-center gap-2"
+        >
+          @if (isLoading()) {
+            <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            Procesando...
+          } @else {
+            Login
+          }
+        </button>
+
+        <!-- Register Link -->
+        <p class="text-center text-xs text-[var(--primary)] font-medium pt-2">
+          Don't have an account? <a routerLink="/auth/register" class="font-bold hover:underline ml-1">Register</a>
+        </p>
+
+        <!-- OAuth -->
+        <div class="mt-4 relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-[var(--primary)]/30"></div>
+          </div>
+          <div class="relative flex justify-center text-[10px] uppercase font-bold text-[var(--primary)]/70">
+            <span class="px-3" style="background: rgba(255, 250, 237, 0.45);">O continúa con</span>
+          </div>
+        </div>
+
+        <button 
+          type="button" 
+          (click)="loginWithGoogle()"
+          [disabled]="isLoading()"
+          class="mt-4 w-full flex items-center justify-center gap-3 py-3 px-4 border border-[var(--primary)]/30 rounded-lg bg-white/50 hover:bg-white/80 text-sm font-semibold text-[var(--primary)] transition-all shadow-sm hover:shadow-md"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Google
+        </button>
+
+        <button
+          type="button"
+          (click)="loginWithFacebook()"
+          [disabled]="isLoading()"
+          class="mt-3 w-full flex items-center justify-center gap-3 py-3 px-4 border border-[#1877F2]/30 rounded-lg bg-[#1877F2]/5 hover:bg-[#1877F2]/10 text-sm font-semibold text-[#1877F2] transition-all shadow-sm hover:shadow-md"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          Facebook
+        </button>
+      </form>
+    } @else {
+      <!-- FORMULARIO INGRESO CON CÓDIGO QR -->
+      <div class="space-y-6">
+        <div class="text-center p-4 bg-white/60 rounded-xl border border-white/50 space-y-2">
+          <lucide-icon [img]="QrCodeIcon" class="w-12 h-12 mx-auto text-[var(--primary)]"></lucide-icon>
+          <p class="text-xs text-[var(--primary)] font-medium">Ingresa el token QR generado por el propietario de tu casa para acceder de forma instantánea.</p>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-[var(--primary)] mb-1 block">Código Token QR</label>
+          <input 
+            type="text" 
+            [ngModel]="qrTokenInput()"
+            (ngModelChange)="qrTokenInput.set($event)"
+            class="w-full bg-white/80 border border-[var(--primary)]/30 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:border-[var(--primary)]"
+            placeholder="Pegar token QR de acceso..."
+          >
+        </div>
+
+        <!-- Escaneo con la cámara del equipo: se muestra el QR del celular
+             frente a la webcam y entra sin escribir nada. -->
+        <button
+          type="button"
+          (click)="toggleScanner()"
+          class="w-full border border-[var(--primary)]/40 text-[var(--primary)] rounded-lg py-3 text-sm font-semibold transition-all hover:bg-[var(--primary)]/5"
+        >
+          {{ showScanner() ? 'Cerrar cámara' : 'Escanear con la cámara' }}
+        </button>
+
+        @if (showScanner()) {
+          <div class="animate-fade-in-up">
+            <app-qr-camera-scanner (scanned)="onQrScanned($event)"></app-qr-camera-scanner>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <div class="bg-[rgba(186,26,26,0.9)] backdrop-blur-md rounded-lg p-3 text-center animate-scale-in shadow-lg">
+            <p class="text-xs text-white font-medium">{{ errorMessage() }}</p>
+          </div>
+        }
+
+        <button
+          type="button"
+          (click)="submitQrLogin()"
+          [disabled]="isLoading()"
+          class="w-full bg-[var(--primary)] hover:bg-[var(--primary-light)] text-white rounded-lg py-3.5 text-sm font-semibold tracking-wide transition-all shadow-xl disabled:opacity-70 flex justify-center items-center gap-2"
+        >
+          @if (isLoading()) {
+            <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            Validando QR...
+          } @else {
+            Canjear QR y Entrar
+          }
+        </button>
+      </div>
+    }
+
+    <!-- Demo Mode Buttons -->
+    @if (demoMode()) {
+      <div class="mt-4 p-3 rounded-lg border border-dashed border-[var(--accent)] bg-[rgba(253,192,3,0.5)]">
+        <p class="text-[10px] text-[#8a6a00] font-bold uppercase tracking-wider text-center mb-2">Modo Desarrollo</p>
+        <div class="flex gap-2">
+          <button 
+            type="button" 
+            (click)="loginDemo('PROPIETARIO')"
+            [disabled]="isLoading()"
+            class="flex-1 bg-[rgba(253,192,3,0.15)] hover:bg-[rgba(253,192,3,0.15)] text-[#8a6a00] rounded-md py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
+          >
+            Demo Propietario
+          </button>
+          <button 
+            type="button" 
+            (click)="loginDemo('ADMIN')"
+            [disabled]="isLoading()"
+            class="flex-1 bg-[rgba(253,192,3,0.15)] hover:bg-[rgba(253,192,3,0.15)] text-[#8a6a00] rounded-md py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
+          >
+            Demo Admin
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

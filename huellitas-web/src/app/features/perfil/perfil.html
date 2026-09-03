@@ -1,0 +1,213 @@
+<div class="mb-8">
+  <h2 class="font-serif text-2xl lg:text-3xl text-[var(--primary)] font-bold">Mi Perfil</h2>
+  <p class="text-[var(--on-surface-variant)] mt-2">Configura tu información personal y administra los miembros de tu casa.</p>
+</div>
+
+<div class="space-y-8 max-w-4xl">
+
+  <!-- FORMULARIO PERFIL -->
+  <div class="bg-[var(--surface)] rounded-3xl p-6 lg:p-10 shadow-sm border border-[var(--outline)]/20 animate-fade-slide-in">
+    
+    @if (successMessage()) {
+      <div class="bg-[var(--primary)] text-white p-4 rounded-xl mb-6 flex items-center gap-3 animate-fade-in">
+        <lucide-icon [img]="CheckCircle2" class="w-5 h-5 text-white"></lucide-icon>
+        <span class="font-medium text-sm">{{ successMessage() }}</span>
+      </div>
+    }
+    
+    @if (errorMessage()) {
+      <div class="bg-[var(--error)] text-white p-4 rounded-xl mb-6 flex items-center gap-3 animate-fade-in">
+        <lucide-icon [img]="AlertCircle" class="w-5 h-5 text-white"></lucide-icon>
+        <span class="font-medium text-sm">{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="perfilForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <div class="flex items-center gap-6 mb-8">
+        <div class="w-24 h-24 rounded-full bg-[var(--accent)]/10 border-4 border-white shadow-md flex items-center justify-center overflow-hidden shrink-0">
+          @if (previewUrl()) {
+            <img [src]="previewUrl() | mediaUrl" class="w-full h-full object-cover">
+          } @else {
+            <lucide-icon [img]="UserCircle" class="w-12 h-12 text-[var(--accent)]"></lucide-icon>
+          }
+        </div>
+        <div class="flex-1">
+          <label class="block text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-2 ml-1">Foto de Perfil (Subir Imagen)</label>
+          <div class="relative group">
+            <input 
+              type="file" 
+              accept="image/*"
+              (change)="onFileSelected($event)"
+              class="w-full bg-[var(--background)] border border-[var(--outline)]/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)] file:text-white hover:file:bg-[#112a11]"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-2 ml-1">Nombre Completo</label>
+          <input 
+            type="text" 
+            formControlName="nombre"
+            class="w-full bg-[var(--background)] border border-[var(--outline)]/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all"
+            placeholder="Tu nombre"
+          >
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-2 ml-1">Correo Electrónico (Identificador)</label>
+          <input 
+            type="email" 
+            formControlName="email"
+            class="w-full bg-black/5 border border-[var(--outline)]/10 text-black/60 rounded-xl px-4 py-3 text-sm focus:outline-none cursor-not-allowed"
+          >
+        </div>
+      </div>
+
+      <div class="pt-6 border-t border-[var(--outline)]/10 flex justify-end">
+        <button 
+          type="submit" 
+          [disabled]="perfilForm.invalid || isLoading()"
+          class="bg-[var(--primary)] hover:bg-[#112a11] text-white rounded-xl py-3 px-8 font-semibold transition-all hover:shadow-lg hover:shadow-[var(--primary)]/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[160px]"
+        >
+          @if (isLoading()) {
+            <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          } @else {
+            <lucide-icon [img]="Save" class="w-4 h-4"></lucide-icon> Guardar Cambios
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- SECCIÓN MIEMBROS DE LA CASA (SOLO VISIBLE PARA PROPIETARIO) -->
+  @if (esPropietario) {
+    <div class="bg-[var(--surface)] rounded-3xl p-6 lg:p-10 shadow-sm border border-[var(--outline)]/20 animate-fade-slide-in space-y-6">
+      
+      <div class="flex items-center justify-between border-b pb-4">
+        <div>
+          <h3 class="font-serif text-xl font-bold text-[var(--primary)] flex items-center gap-2">
+            <lucide-icon [img]="Users" class="w-5 h-5 text-[var(--primary)]"></lucide-icon> Miembros de la Casa
+          </h3>
+          <p class="text-xs text-gray-500">Registra familiares o cuidadores secundarios con acceso limitado a tus dispositivos y mascotas</p>
+        </div>
+        <button (click)="cargarMiembros()" class="btn btn-outline py-2 px-3 text-xs flex items-center gap-1">
+          <lucide-icon [img]="RefreshCw" class="w-4 h-4" [class.animate-spin]="cargandoMiembros()"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Formulario para agregar Miembro -->
+      <form [formGroup]="miembroForm" (ngSubmit)="crearMiembro()" class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
+        <h4 class="font-bold text-xs text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+          <lucide-icon [img]="UserPlus" class="w-4 h-4 text-[var(--primary)]"></lucide-icon> Agregar Nuevo Miembro
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre</label>
+            <input type="text" formControlName="nombre" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="Ej. María José Peña">
+            @if (isCampoMiembroInvalido('nombre')) {
+              <p class="text-[11px] text-[var(--error)] font-bold mt-1">El nombre solo puede contener letras y espacios (2 a 60 caracteres).</p>
+            }
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Email</label>
+            <input type="email" formControlName="email" class="form-input text-xs w-full py-2 px-3 rounded-xl border border-gray-200" placeholder="correo@ejemplo.com">
+            @if (isCampoMiembroInvalido('email')) {
+              <p class="text-[11px] text-[var(--error)] font-bold mt-1">Ingresa un correo electrónico válido.</p>
+            }
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <button type="submit" [disabled]="miembroForm.invalid || cargandoMiembros()" class="btn bg-[var(--primary)] hover:bg-[var(--primary)] text-white text-xs font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm">
+            + Crear Miembro
+          </button>
+        </div>
+      </form>
+
+      <!-- Lista de Miembros Actuales -->
+      <div class="space-y-3">
+        <h4 class="font-bold text-xs text-gray-500 uppercase tracking-wider">Miembros Registrados</h4>
+        @if (cargandoMiembros()) {
+          <div class="text-center py-6 text-xs text-gray-400">Cargando miembros de la casa...</div>
+        } @else if (miembros().length === 0) {
+          <div class="p-6 text-center text-xs text-gray-400 bg-gray-50/50 rounded-2xl border border-gray-100">
+            No tienes miembros registrados en esta casa. Agrega uno usando el formulario.
+          </div>
+        } @else {
+          <div class="space-y-2">
+            @for (m of miembros(); track m.id) {
+              <div class="p-4 bg-white rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
+                <div class="space-y-0.5">
+                  <h5 class="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    {{ m.nombre }} 
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--primary-surface)] text-[var(--primary)] uppercase">MIEMBRO</span>
+                    @if (m.bienvenida_activada) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--primary-surface)] text-[var(--primary)]">Activo</span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[rgba(253,192,3,0.15)] text-[#8a6a00]">Bienvenida Pendiente</span>
+                    }
+                  </h5>
+                  <p class="text-xs text-gray-500">{{ m.email }}</p>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  @if (!m.bienvenida_activada) {
+                    <button (click)="generarQrMiembro(m, 'BIENVENIDA')" class="btn bg-[var(--primary-surface)] text-[var(--primary)] hover:bg-[var(--primary-surface)] border border-[var(--primary)] py-1.5 px-3 text-xs font-bold rounded-xl flex items-center gap-1">
+                      <lucide-icon [img]="RefreshCw" class="w-3.5 h-3.5 text-[var(--primary)]"></lucide-icon> Reenviar QR (24h)
+                    </button>
+                  }
+
+                  <button (click)="generarQrMiembro(m, 'ACCESO_RAPIDO')" class="btn bg-[rgba(253,192,3,0.15)] text-[#8a6a00] hover:bg-[rgba(253,192,3,0.15)] border border-[var(--accent)] py-1.5 px-3 text-xs font-bold rounded-xl flex items-center gap-1">
+                    <lucide-icon [img]="QrCode" class="w-3.5 h-3.5 text-[var(--accent)]"></lucide-icon> QR Rápido (90s)
+                  </button>
+
+                  <button (click)="eliminarMiembro(m.id)" class="btn bg-[var(--error-surface)] text-[var(--error)] hover:bg-[var(--error-surface)] border border-[var(--error)] py-1.5 px-3 text-xs font-bold rounded-xl flex items-center gap-1">
+                    <lucide-icon [img]="Trash2" class="w-3.5 h-3.5 text-[var(--error)]"></lucide-icon> Revocar
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+</div>
+
+<!-- MODAL CÓDIGO QR MIEMBRO -->
+@if (qrModalVisible()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5 text-center animate-fade-slide-in">
+      <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+        <h3 class="font-serif font-bold text-lg text-[var(--primary)] flex items-center gap-2">
+          <lucide-icon [img]="QrCode" class="w-5 h-5 text-[var(--accent)]"></lucide-icon> Token QR de Acceso
+        </h3>
+        <button (click)="cerrarQrModal()" class="text-gray-400 hover:text-gray-600 text-xs font-bold">Cerrar</button>
+      </div>
+
+      <p class="text-xs text-gray-600">
+        Acceso rápido para <strong class="text-[var(--primary)]">{{ qrMiembroSeleccionado()?.nombre }}</strong>. Escanea o copia este token temporal desde la pantalla de Login con QR.
+      </p>
+
+      <!-- Token Representación QR String -->
+      <div class="p-4 bg-[rgba(253,192,3,0.8)] rounded-2xl border border-[rgba(253,192,3,0.6)] space-y-3">
+        <div class="p-3 bg-white rounded-xl border border-[var(--accent)] font-mono text-[11px] text-[#8a6a00] break-all select-all shadow-inner">
+          {{ qrRawToken() || 'Generando token seguro...' }}
+        </div>
+
+        <div class="flex items-center justify-center gap-1.5 text-[#8a6a00] text-xs font-bold">
+          <lucide-icon [img]="Clock" class="w-4 h-4 text-[var(--accent)] animate-pulse"></lucide-icon>
+          Expiración en: <span class="text-[var(--error)] font-bold text-sm">{{ qrTiempoRestante() }}s</span>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button (click)="generarQrMiembro(qrMiembroSeleccionado())" class="btn btn-outline w-full py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2">
+          <lucide-icon [img]="RefreshCw" class="w-4 h-4"></lucide-icon> Regenerar Nuevo Token QR
+        </button>
+      </div>
+    </div>
+  </div>
+}

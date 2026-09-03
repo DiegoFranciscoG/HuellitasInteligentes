@@ -1,0 +1,231 @@
+<div class="flex h-screen overflow-hidden bg-[var(--surface)]">
+
+  <!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+  <!-- En escritorio la barra vive oculta fuera de pantalla y se revela al
+       acercar el mouse al borde izquierdo (ver .sidebar-hover-zone en
+       styles.scss). El div envolvente es lo que hace que aparezca: mientras
+       el cursor esté sobre el borde delgado O sobre la barra ya abierta,
+       ambos siguen siendo descendientes del mismo :hover. En móvil este
+       wrapper no afecta nada — ahí sigue mandando sidebarOpen() como antes. -->
+  <div class="sidebar-hover-zone">
+    <div class="sidebar-hover-hint" aria-hidden="true"></div>
+    <aside class="sidebar" [class.open]="sidebarOpen()">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--primary)] mr-2 font-bold shadow-sm shadow-[var(--accent)]/50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <span class="font-serif tracking-wide">Huellitas</span>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 space-y-1.5 mt-4 px-2 overflow-y-auto">
+      @for (item of navItems; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active" class="sidebar-nav-item group" (click)="sidebarOpen.set(false)">
+          <lucide-icon [img]="item.icon" class="w-5 h-5 mr-3 transition-transform group-hover:scale-110"></lucide-icon>
+          <span class="font-medium text-[0.9rem]">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <!-- User + Logout -->
+    <div class="border-t border-white/10 mt-auto pt-4 pb-4 px-2 space-y-2">
+      <!-- User info -->
+      <div class="flex items-center gap-3 px-3 py-2 bg-white/5 rounded-xl border border-white/5 mb-3">
+        <div class="w-9 h-9 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--primary)] font-bold text-sm shrink-0 overflow-hidden">
+          @if (user()?.foto_url) {
+            <img [src]="user().foto_url | mediaUrl" alt="Avatar" class="w-full h-full object-cover">
+          } @else {
+            {{ firstName()[0] }}
+          }
+        </div>
+        <div class="overflow-hidden">
+          <p class="text-white text-xs font-semibold truncate">{{ user()?.nombre }}</p>
+          <p class="text-[rgba(138,106,0,0.8)] text-[10px] truncate font-medium uppercase tracking-wider">{{ (user()?.rol === 'ADMIN' || user()?.rol === 'ADMINISTRADOR') ? 'Administrador' : 'Propietario' }}</p>
+        </div>
+      </div>
+      <button (click)="logout()" class="sidebar-nav-item text-[var(--error)] hover:bg-[rgba(186,26,26,0.15)] hover:text-[var(--error)] transition-colors w-full justify-start pl-4 group">
+        <lucide-icon [img]="LogOut" class="w-5 h-5 mr-3 transition-transform group-hover:-translate-x-1"></lucide-icon>
+        <span class="font-medium text-[0.9rem]">Cerrar Sesión</span>
+      </button>
+    </div>
+    </aside>
+  </div>
+
+  <!-- Sidebar overlay mobile -->
+  @if (sidebarOpen()) {
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity" (click)="sidebarOpen.set(false)"></div>
+  }
+
+  <!-- ══════════════════════ MAIN CONTENT AREA ══════════════════════ -->
+  <div class="main-content flex-1 flex flex-col overflow-hidden relative">
+    
+    <!-- Topbar -->
+    <header class="topbar sticky top-0 z-30 bg-[var(--surface)]/80 backdrop-blur-xl border-b border-[var(--outline)]/20 shadow-sm">
+      <div class="flex items-center gap-4">
+        <button class="md:hidden p-2 hover:bg-[var(--primary)]/10 text-[var(--primary)] rounded-xl transition-colors active:scale-95" (click)="sidebarOpen.update(v => !v)" aria-label="Abrir menú de navegación">
+          <lucide-icon [img]="Menu" class="w-6 h-6"></lucide-icon>
+        </button>
+        <div>
+          <p class="text-[10px] uppercase font-bold tracking-widest text-[var(--on-surface-variant)]">{{ greetingSignal() }}</p>
+          <h1 class="font-serif text-xl text-[var(--primary)] font-bold drop-shadow-sm">{{ firstName() }}</h1>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4 relative">
+        <!-- Notification -->
+        <button (click)="toggleNotificaciones()" class="relative p-2 text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-full transition-all hover:scale-105 active:scale-95 group" aria-label="Notificaciones" [attr.aria-expanded]="mostrarNotificaciones()">
+          <lucide-icon [img]="Bell" class="w-5 h-5 group-hover:fill-[var(--primary)]/10"></lucide-icon>
+          @if (unreadCount() > 0) {
+            <span class="absolute top-1 right-1.5 w-2.5 h-2.5 bg-[var(--error)] border-2 border-[var(--surface)] rounded-full animate-pulse"></span>
+          }
+        </button>
+
+        <!-- Notification Dropdown -->
+        @if (mostrarNotificaciones()) {
+          <div class="absolute right-0 top-full mt-2 w-80 bg-white rounded-[2rem] shadow-[0px_10px_30px_rgba(27,48,34,0.08)] z-50 p-4 animate-fade-slide-in">
+            <div class="flex items-center justify-between pb-3 border-b border-black/5 mb-3">
+              <h3 class="font-serif font-semibold text-sm text-[var(--primary)] flex items-center gap-2">
+                <lucide-icon [img]="Bell" class="w-4 h-4 text-[var(--accent)]"></lucide-icon> Notificaciones
+              </h3>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--primary-surface)] text-[var(--primary)]">{{ notificaciones().length }} total</span>
+            </div>
+
+            <div class="flex flex-col gap-3 max-h-72 overflow-y-auto">
+              @if (notificaciones().length === 0) {
+                <div class="text-center py-6 text-xs text-gray-400">Sin notificaciones por ahora</div>
+              }
+              @for (n of notificaciones(); track n.id) {
+                <div (click)="abrirNotificacion(n.tipo)"
+                  class="p-3 rounded-2xl text-xs transition-transform active:scale-[0.99]"
+                  [class.cursor-pointer]="categoriaNotificacion(n.tipo) === 'momento'"
+                  [ngClass]="{
+                    'bg-[var(--accent)]/15 border-l-4 border-[var(--accent)]': categoriaNotificacion(n.tipo) === 'anuncio',
+                    'bg-[var(--error-surface)] border-l-4 border-[var(--error)]': categoriaNotificacion(n.tipo) === 'moderacion',
+                    'bg-[var(--primary-surface)]/60 border-l-4 border-[var(--primary)]': categoriaNotificacion(n.tipo) === 'iot',
+                    'bg-[var(--accent)]/20 border-l-4 border-[#8a6a00]': categoriaNotificacion(n.tipo) === 'momento'
+                  }">
+                  <h4 class="font-serif font-semibold mb-0.5"
+                    [ngClass]="{
+                      'text-[#8a6a00]': categoriaNotificacion(n.tipo) === 'anuncio' || categoriaNotificacion(n.tipo) === 'momento',
+                      'text-[var(--error)]': categoriaNotificacion(n.tipo) === 'moderacion',
+                      'text-[var(--primary)]': categoriaNotificacion(n.tipo) === 'iot'
+                    }">
+                    {{ n.titulo || (categoriaNotificacion(n.tipo) === 'iot' ? 'Aviso de tu IoT' : categoriaNotificacion(n.tipo) === 'momento' ? 'Momento con tu mascota' : categoriaNotificacion(n.tipo) === 'moderacion' ? 'Moderación' : 'Anuncio Oficial') }}
+                  </h4>
+                  <p class="text-gray-600 leading-snug">
+                    @for (tramo of segmentarMensaje(n.mensaje || n.contenido); track $index) {
+                      @if (tramo.url) {
+                        <a [href]="tramo.url" target="_blank" rel="noopener" class="text-[var(--primary)] font-bold underline hover:opacity-70">{{ tramo.texto }}</a>
+                      } @else {
+                        {{ tramo.texto }}
+                      }
+                    }
+                  </p>
+                  <span class="text-[10px] text-gray-400 mt-1.5 block font-light">{{ (n.enviado_at || n.created_at) | date:'short' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        <!-- Avatar -->
+        <a routerLink="/perfil" class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)] flex items-center justify-center text-white font-bold text-sm shadow-md cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 border-transparent hover:border-[var(--accent)]/50">
+          @if (user()?.foto_url) {
+            <img [src]="user().foto_url | mediaUrl" alt="Avatar" class="w-full h-full rounded-full object-cover">
+          } @else {
+            {{ firstName()[0] }}
+          }
+        </a>
+      </div>
+    </header>
+
+    <!-- Scrollable Content Router Outlet -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 relative">
+      @if (user() && !user()?.email_verificado && user()?.rol !== 'ADMIN') {
+        <div class="bg-[rgba(186,26,26,0.1)] border border-[rgba(186,26,26,0.2)] text-[var(--error)] p-4 rounded-xl mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
+          <div class="flex items-start gap-3">
+            <lucide-icon [img]="ShieldAlert" class="w-5 h-5 text-[var(--error)] shrink-0 mt-0.5"></lucide-icon>
+            <div>
+              <p class="font-bold text-sm">Verificación pendiente</p>
+              <p class="text-xs text-[rgba(186,26,26,0.8)]">Revisa tu bandeja de entrada e ingresa el código para activar tu cuenta por completo.</p>
+            </div>
+          </div>
+          <a routerLink="/auth/verificar-email" class="btn btn-outline border-[rgba(186,26,26,0.3)] text-[var(--error)] hover:bg-[var(--error)] hover:text-white shrink-0 text-sm py-1.5 px-4">Verificar Ahora</a>
+        </div>
+      }
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+  <!-- ══════════ BOTTOM NAV (mobile) ══════════ -->
+  <nav class="bottom-nav z-30">
+    @for (item of navItems.slice(0, 5); track item.route) {
+      <a [routerLink]="item.route" routerLinkActive="active" class="bottom-nav-item group" [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}">
+        <lucide-icon [img]="item.icon" class="w-5 h-5 mb-1 group-[.active]:text-[var(--accent)] transition-colors"></lucide-icon>
+        <span class="text-[10px] group-[.active]:font-bold">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+</div>
+
+<app-welcome-toast></app-welcome-toast>
+@if (!isAdminRoute() && !isAdmin) {
+  <app-ia-bubble></app-ia-bubble>
+}
+
+@if (debeCambiarPassword()) {
+  <div class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100 space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 bg-[rgba(253,192,3,0.15)] text-[#8a6a00] rounded-full flex items-center justify-center mx-auto mb-3">
+          <lucide-icon [img]="KeyRound" class="w-7 h-7"></lucide-icon>
+        </div>
+        <h3 class="font-serif text-2xl font-bold text-gray-900">Cambia tu Contraseña</h3>
+        <p class="text-xs text-gray-600">Por motivos de seguridad, debes actualizar tu contraseña inicial antes de acceder al sistema.</p>
+      </div>
+
+      @if (errorCambioPassword()) {
+        <div class="p-3 rounded-xl bg-[var(--error-surface)] text-[var(--error)] text-xs font-bold border border-[var(--error)]">
+          {{ errorCambioPassword() }}
+        </div>
+      }
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Nueva Contraseña</label>
+          <input 
+            type="password" 
+            [value]="nuevaPasswordInput()"
+            (input)="nuevaPasswordInput.set($any($event.target).value)"
+            placeholder="Mínimo 6 caracteres"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
+          <input 
+            type="password" 
+            [value]="confirmPasswordInput()"
+            (input)="confirmPasswordInput.set($any($event.target).value)"
+            placeholder="Repite la contraseña"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+          />
+        </div>
+      </div>
+
+      <button 
+        (click)="guardarNuevaPassword()"
+        [disabled]="loadingCambioPassword()"
+        class="w-full py-3.5 bg-[var(--primary)] text-white font-bold text-sm rounded-xl hover:bg-[#112a11] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/20"
+      >
+        @if (loadingCambioPassword()) {
+          <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Guardando...
+        } @else {
+          Actualizar y Continuar
+        }
+      </button>
+    </div>
+  </div>
+}

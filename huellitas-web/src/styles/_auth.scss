@@ -1,0 +1,81 @@
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at top right, rgba(6, 27, 14, 0.05) 0%, transparent 40%),
+              radial-gradient(circle at bottom left, rgba(253, 192, 3, 0.05) 0%, transparent 40%);
+}
+
+.auth-panel {
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(6, 27, 14, 0.05);
+    margin-bottom: 1rem;
+    box-shadow: 0 0 20px rgba(6, 27, 14, 0.1);
+  }
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+}
+
+.social-login {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-social {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  gap: 0.5rem;
+  
+  &:hover {
+    background: var(--surface-light);
+  }
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+
+  a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

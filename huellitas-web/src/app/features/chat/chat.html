@@ -1,0 +1,210 @@
+﻿<!-- VISTA SALA ACTIVA -->
+@if (salaActiva()) {
+  <div class="h-[calc(100vh-140px)] flex flex-col animate-fade-slide-in">
+    <!-- Header sala -->
+    <div class="mb-4 flex items-center gap-3">
+      <button (click)="salirVista()" class="p-2 hover:bg-black/5 rounded-full transition-colors">
+        <lucide-icon [img]="ArrowLeft" class="w-5 h-5 text-[var(--primary)]"></lucide-icon>
+      </button>
+      <div class="flex-1">
+        <h2 class="font-bold text-lg text-[var(--primary)]">{{ salaActiva()!.tema }}</h2>
+        <p class="text-xs text-[var(--on-surface-variant)]">{{ salaActiva()!.total_miembros }} miembro{{ salaActiva()!.total_miembros !== 1 ? 's' : '' }}
+          <span class="ml-2 inline-flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="isConnected() ? 'bg-[var(--primary)]' : 'bg-[var(--error)]'"></span>
+            {{ isConnected() ? 'En vivo' : 'Conectando...' }}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div class="flex-1 bg-white rounded-3xl border border-[var(--outline)]/20 shadow-sm flex flex-col overflow-hidden">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3" #msgContainer>
+        @if (mensajes().length === 0) {
+          <div class="h-full flex flex-col items-center justify-center text-[var(--on-surface-variant)] opacity-50 gap-2">
+            <lucide-icon [img]="MessageSquare" class="w-10 h-10"></lucide-icon>
+            <p class="text-sm">Sé el primero en escribir en esta sala.</p>
+          </div>
+        }
+        @for (msg of mensajes(); track $index) {
+          <div class="flex gap-2.5" [class.flex-row-reverse]="msg.emisorId === user()?.id">
+            <!-- Message avatar -->
+            <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold overflow-hidden shadow-[0_2px_10px_-2px_rgba(0,0,0,0.15)] ring-2 ring-white"
+              [class.bg-[var(--primary)]]="msg.emisorId === user()?.id"
+              [class.text-white]="msg.emisorId === user()?.id"
+              [class.bg-slate-100]="msg.emisorId !== user()?.id"
+              [class.text-slate-700]="msg.emisorId !== user()?.id">
+              @if (msg.emisorId === user()?.id && user()?.foto_url) {
+                <img [src]="user()!.foto_url" alt="Avatar" class="w-full h-full object-cover">
+              } @else if (msg['emisorFoto']) {
+                <img [src]="msg['emisorFoto']" alt="Avatar" class="w-full h-full object-cover">
+              } @else {
+                {{ (msg.emisorNombre || 'U')[0].toUpperCase() }}
+              }
+            </div>
+            
+            <div class="max-w-[72%] flex flex-col relative group" [class.items-end]="msg.emisorId === user()?.id"
+                 (mouseenter)="msg.mostrarPicker = true" (mouseleave)="msg.mostrarPicker = false">
+              @if (msg.emisorId !== user()?.id) {
+                <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1 px-1">{{ msg.emisorNombre }}</p>
+              }
+              <div class="relative">
+                <!-- Picker flotante Glassmorphism -->
+                @if (msg.mostrarPicker) {
+                  <div class="absolute bottom-full mb-2 bg-white/80 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full px-2 py-1.5 flex gap-1 animate-fade-slide-in z-20 border border-white/50"
+                       [class.right-0]="msg.emisorId === user()?.id" [class.left-0]="msg.emisorId !== user()?.id">
+                    @for (emoji of EMOJIS; track emoji) {
+                      <button (click)="toggleReaccion(msg, emoji, 'chat-sala')" 
+                              class="text-lg hover:scale-150 hover:-translate-y-2 transition-all duration-300 transform-gpu"
+                              [class.scale-125]="haReaccionado(msg, emoji)">
+                        {{ emoji }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                <!-- Bubble Chat Premium 3D -->
+                <div class="px-5 py-3 rounded-2xl text-[15px] relative transition-transform duration-300 hover:scale-[1.02] shadow-[0_4px_14px_0_rgba(0,0,0,0.05)] border border-white/50 backdrop-blur-sm"
+                  [class.bg-gradient-to-br]="msg.emisorId === user()?.id"
+                  [class.from-[var(--accent)]]="msg.emisorId === user()?.id"
+                  [class.to-[var(--accent)]]="msg.emisorId === user()?.id"
+                  [class.text-white]="msg.emisorId === user()?.id"
+                  [class.rounded-tr-sm]="msg.emisorId === user()?.id"
+                  [class.shadow-[rgba(253,192,3,0.2)]]="msg.emisorId === user()?.id"
+                  
+                  [class.bg-gradient-to-br]="msg.emisorId !== user()?.id"
+                  [class.from-white]="msg.emisorId !== user()?.id"
+                  [class.to-slate-50]="msg.emisorId !== user()?.id"
+                  [class.text-slate-800]="msg.emisorId !== user()?.id"
+                  [class.rounded-tl-sm]="msg.emisorId !== user()?.id">
+                  {{ msg.contenido }}
+                </div>
+              </div>
+
+              <!-- Contador de reacciones flotante -->
+              @if (agruparReacciones(msg.reacciones).length > 0) {
+                <div class="flex items-center gap-0.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.15)] border border-gray-100 z-10 -mt-3 mx-2 transition-transform transform hover:scale-110">
+                  <div class="flex -space-x-1.5">
+                    @for (reac of agruparReacciones(msg.reacciones); track reac.emoji) {
+                      <span class="text-xs bg-white rounded-full p-0.5 shadow-sm">{{ reac.emoji }}</span>
+                    }
+                  </div>
+                  <span class="text-[10px] text-gray-600 font-bold ml-1">{{ msg.reacciones?.length || 0 }}</span>
+                </div>
+              }
+
+              @if (msg.fecha) {
+                <p class="text-[9px] text-[var(--on-surface-variant)] mt-1 px-1 font-medium opacity-60">
+                  {{ msg.fecha | date:'HH:mm' }}
+                </p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      <!-- Input -->
+      <div class="p-4 bg-white/50 backdrop-blur-md border-t border-gray-100">
+        <form (ngSubmit)="enviar()" class="flex gap-3 items-center">
+          <input type="text" name="msg" [ngModel]="nuevoMensaje()" (ngModelChange)="nuevoMensaje.set($event)"
+            placeholder="Escribe un mensaje..."
+            class="flex-1 bg-gray-50/50 rounded-2xl px-5 py-3.5 text-sm outline-none focus:bg-white border border-gray-200 focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(253,192,3,0.1)] shadow-sm transition-all duration-300 placeholder:text-gray-400">
+          <button type="submit" [disabled]="!nuevoMensaje().trim()"
+                  class="bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:hover:bg-[var(--accent)] text-[var(--primary)] rounded-2xl p-3.5 shadow-md shadow-[rgba(253,192,3,0.2)] transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center">
+            <lucide-icon [img]="Send" class="w-5 h-5"></lucide-icon>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="h-[calc(100vh-140px)] flex flex-col animate-fade-slide-in">
+    <!-- Header principal -->
+    <div class="mb-6 flex justify-between items-center">
+      <div>
+        <h2 class="font-bold text-2xl text-[var(--primary)] flex items-center gap-2">
+          <lucide-icon [img]="MessageSquare" class="w-6 h-6"></lucide-icon>
+          Salas de Chat
+        </h2>
+        <p class="text-sm text-[var(--on-surface-variant)]">Únete a conversaciones con la comunidad</p>
+      </div>
+      <button (click)="mostrarForm.set(true)" 
+        class="bg-[var(--accent)] hover:opacity-90 text-[var(--primary)] px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
+        <lucide-icon [img]="Plus" class="w-4 h-4"></lucide-icon>
+        Crear Sala
+      </button>
+    </div>
+
+    @if (mostrarForm()) {
+      <div class="bg-white p-5 rounded-2xl border border-[var(--outline)]/20 shadow-sm mb-6 animate-fade-in relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1 h-full bg-[var(--primary)]"></div>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-[var(--primary)]">Nueva Sala</h3>
+          <button (click)="mostrarForm.set(false)" class="p-1 hover:bg-black/5 rounded-full text-[var(--on-surface-variant)]">
+            <lucide-icon [img]="X" class="w-4 h-4"></lucide-icon>
+          </button>
+        </div>
+        <form (ngSubmit)="crearSala()" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Tema / Nombre</label>
+            <input type="text" [ngModel]="nuevoTema()" (ngModelChange)="nuevoTema.set($event)" name="tema"
+              class="w-full text-sm p-3 border border-[var(--outline)]/30 rounded-xl focus:border-[var(--accent)] focus:ring focus:ring-[var(--accent)]/20 transition-all outline-none"
+              placeholder="Ej: Golden Retrievers Quito" required>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Descripción (Opcional)</label>
+            <input type="text" [ngModel]="nuevaDesc()" (ngModelChange)="nuevaDesc.set($event)" name="desc"
+              class="w-full text-sm p-3 border border-[var(--outline)]/30 rounded-xl focus:border-[var(--accent)] focus:ring focus:ring-[var(--accent)]/20 transition-all outline-none"
+              placeholder="¿De qué trata esta sala?">
+          </div>
+          <div class="flex justify-end pt-2">
+            <button type="submit" [disabled]="!nuevoTema().trim()"
+              class="bg-[var(--primary)] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50">
+              Crear y Unirse
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Lista de Salas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+      @for (sala of salas(); track sala.id) {
+        <div class="bg-white border border-[var(--outline)]/20 rounded-2xl p-5 hover:shadow-md transition-all group relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-bold text-[var(--primary)] flex items-center gap-1.5 text-lg">
+                <lucide-icon [img]="Hash" class="w-4 h-4 text-[var(--accent)]"></lucide-icon>
+                {{ sala.tema }}
+              </h3>
+              @if (sala.es_miembro) {
+                <span class="bg-[var(--primary-surface)] text-[var(--primary)] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Unido</span>
+              }
+            </div>
+            <p class="text-sm text-[var(--on-surface-variant)] line-clamp-2 min-h-[40px] mb-4">
+              {{ sala.descripcion || 'Sin descripción' }}
+            </p>
+          </div>
+          <div class="flex items-center justify-between mt-auto pt-3 border-t border-[var(--outline)]/10">
+            <p class="text-xs text-[var(--on-surface-variant)] flex items-center gap-1.5 font-medium">
+              <lucide-icon [img]="Users" class="w-3.5 h-3.5"></lucide-icon>
+              {{ sala.total_miembros }}
+            </p>
+            <button (click)="entrarSala(sala)"
+              class="text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95"
+              [ngClass]="sala.es_miembro
+                ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-light)]'
+                : 'bg-[var(--accent)] text-[var(--primary)] hover:bg-[var(--accent)]'">
+              {{ sala.es_miembro ? 'Entrar al Chat' : 'Unirse ahora' }}
+            </button>
+          </div>
+        </div>
+      }
+      @empty {
+        <div class="col-span-1 md:col-span-2 text-center py-20 text-[var(--on-surface-variant)] opacity-50 bg-white/50 rounded-3xl border border-dashed border-gray-300">
+          <lucide-icon [img]="MessageSquare" class="w-12 h-12 mx-auto mb-4 text-gray-400"></lucide-icon>
+          <p class="font-medium">No hay salas todavía. ¡Crea la primera!</p>
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,163 @@
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Header "Natural Clay" -->
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <span class="inline-block bg-[var(--primary)]/8 text-[var(--primary)] text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3">
+        Panel SaaS
+      </span>
+      <h1 class="font-serif text-3xl text-[var(--primary)] font-bold">Panel de <span class="italic-serif">Administración</span></h1>
+      <p class="text-xs text-[var(--on-surface-variant)] mt-1">Métricas en tiempo real sincronizadas con PostgreSQL</p>
+    </div>
+    <button (click)="cargarDashboard()" class="bg-[var(--primary)] hover:bg-[var(--primary-light)] text-white rounded-2xl py-2.5 px-5 text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
+      <lucide-icon [img]="RefreshCw" class="w-4 h-4" [class.animate-spin]="isLoading()"></lucide-icon>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="bg-[var(--surface-card)] p-5 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-[var(--primary)]/8 text-[var(--primary)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Users" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-[var(--on-surface-variant)] font-medium">Usuarios Activos</p>
+        <h3 class="text-2xl font-serif font-bold text-[var(--primary)]">{{ stats().resumen?.total_usuarios_activos || 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="bg-[var(--surface-card)] p-5 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-[var(--primary)]/8 text-[var(--primary)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Home" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-[var(--on-surface-variant)] font-medium">Casas Registradas</p>
+        <h3 class="text-2xl font-serif font-bold text-[var(--primary)]">{{ stats().resumen?.total_casas || 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="bg-[var(--surface-card)] p-5 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-[var(--accent)]/15 text-[var(--accent-dark)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="CreditCard" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-[var(--on-surface-variant)] font-medium">Suscripciones Activas</p>
+        <h3 class="text-2xl font-serif font-bold text-[var(--primary)]">{{ stats().resumen?.suscripciones_activas || 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="bg-[var(--surface-card)] p-5 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-[var(--primary)]/8 text-[var(--primary)] flex items-center justify-center shrink-0">
+        <lucide-icon [img]="Cpu" class="w-6 h-6"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-xs text-[var(--on-surface-variant)] font-medium">Dispositivos IoT</p>
+        <h3 class="text-2xl font-serif font-bold text-[var(--primary)]">{{ stats().resumen?.total_dispositivos || 0 }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 Bar Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Chart 1: Registros de Usuarios por Mes -->
+    <div class="bg-[var(--surface-card)] p-6 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex flex-col justify-between">
+      <div>
+        <h3 class="font-serif font-bold text-base text-[var(--primary)] mb-1 flex items-center gap-2">
+          <lucide-icon [img]="BarChart2" class="w-4 h-4 text-[var(--accent-dark)]"></lucide-icon> Usuarios por Mes
+        </h3>
+        <p class="text-xs text-[var(--on-surface-variant)] mb-6">Crecimiento de registros recientes</p>
+      </div>
+      <div class="h-48 flex items-end gap-3 pt-6 border-b border-[var(--outline)]/30">
+        @for (m of registrosMes(); track m.mes) {
+          <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+            <span class="text-[10px] font-bold text-[var(--primary)]">{{ m.total }}</span>
+            <div class="w-full bg-[var(--primary)] rounded-t-xl rounded-b-md transition-all duration-500 hover:bg-[var(--primary-light)]"
+                 [style.height.%]="(m.total / getMaxMonthCount()) * 100"></div>
+            <span class="text-[10px] text-[var(--on-surface-variant)] font-medium mt-1">{{ m.mes }}</span>
+          </div>
+        } @empty {
+          <p class="text-xs text-[var(--on-surface-variant)] w-full text-center self-center">Sin registros todavía.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Chart 2: Planes de Suscripción más usados -->
+    <div class="bg-[var(--surface-card)] p-6 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex flex-col justify-between">
+      <div>
+        <h3 class="font-serif font-bold text-base text-[var(--primary)] mb-1 flex items-center gap-2">
+          <lucide-icon [img]="BarChart2" class="w-4 h-4 text-[var(--accent-dark)]"></lucide-icon> Planes Más Utilizados
+        </h3>
+        <p class="text-xs text-[var(--on-surface-variant)] mb-6">Distribución actual de suscripciones</p>
+      </div>
+      <div class="space-y-4 my-auto">
+        @if (!stats().por_plan || stats().por_plan.length === 0) {
+          <div class="text-center py-8 text-xs text-[var(--on-surface-variant)]">Sin datos de planes</div>
+        }
+        @for (p of stats().por_plan; track p.plan) {
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-bold">
+              <span class="text-[var(--on-surface)]">{{ p.plan }}</span>
+              <span class="text-[var(--accent-dark)]">{{ p.total }} suscritos</span>
+            </div>
+            <div class="w-full bg-[var(--primary)]/8 h-3 rounded-full overflow-hidden">
+              <div class="bg-[var(--accent)] h-full rounded-full transition-all duration-500"
+                   [style.width.%]="(p.total / getMaxPlanCount()) * 100"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Chart 3: Dispositivos por Casa, una vivienda a la vez, rota sola -->
+    <div class="bg-[var(--surface-card)] p-6 rounded-[32px] border border-[var(--outline)]/20 shadow-[0_10px_30px_-10px_rgba(27,48,34,0.12)] flex flex-col justify-between">
+      <div>
+        <h3 class="font-serif font-bold text-base text-[var(--primary)] mb-1 flex items-center gap-2">
+          <lucide-icon [img]="BarChart2" class="w-4 h-4 text-[var(--accent-dark)]"></lucide-icon> Dispositivos por Casa
+        </h3>
+        <p class="text-xs text-[var(--on-surface-variant)] mb-4">
+          {{ dispositivosCasa().length }} {{ dispositivosCasa().length === 1 ? 'vivienda con IoT' : 'viviendas con IoT' }}
+        </p>
+      </div>
+      @if (dispositivosCasa().length === 0) {
+        <div class="text-center py-8 text-xs text-[var(--on-surface-variant)] my-auto">Sin dispositivos registrados todavía.</div>
+      } @else if (casaMostrada(); as d) {
+        <div class="bg-[var(--primary)]/6 rounded-2xl p-5 flex flex-col gap-3">
+          <div class="flex items-end gap-2">
+            <span class="text-3xl font-serif font-bold text-[var(--primary)]">{{ d.total }}</span>
+            <span class="text-[10px] uppercase font-bold tracking-wide text-[var(--accent-dark)] mb-1.5">{{ d.total === 1 ? 'dispositivo' : 'dispositivos' }}</span>
+          </div>
+          <div class="pt-2 border-t border-[var(--outline)]/20">
+            <p class="text-sm font-bold text-[var(--on-surface)] truncate">{{ d.casa }}</p>
+            <p class="text-[11px] text-[var(--on-surface-variant)] truncate">{{ d.propietario }}</p>
+          </div>
+          <!-- Salud real de la vivienda: cuántos están en línea ahora y cuántos tienen algo que revisar -->
+          <div class="flex gap-3 pt-2 border-t border-[var(--outline)]/20 text-[11px] font-bold">
+            <span class="flex items-center gap-1 text-[var(--primary)]">
+              <lucide-icon [img]="Wifi" class="w-3.5 h-3.5"></lucide-icon> {{ d.enLinea }} en línea
+            </span>
+            @if (d.conProblema > 0) {
+              <span class="flex items-center gap-1 text-[var(--error)]">
+                <lucide-icon [img]="AlertTriangle" class="w-3.5 h-3.5"></lucide-icon> {{ d.conProblema }} con problema
+              </span>
+            } @else {
+              <span class="flex items-center gap-1 text-[var(--on-surface-variant)]">
+                <lucide-icon [img]="WifiOff" class="w-3.5 h-3.5"></lucide-icon> {{ d.total - d.enLinea }} desconectado(s)
+              </span>
+            }
+          </div>
+        </div>
+        @if (dispositivosCasa().length > 1) {
+          <div class="flex justify-center gap-1.5 mt-4">
+            @for (item of dispositivosCasa(); track item.casaId; let i = $index) {
+              <button (click)="irACasa(i)" [attr.aria-label]="'Ver ' + item.casa"
+                class="w-1.5 h-1.5 rounded-full transition-all"
+                [ngClass]="i === casaActiva() ? 'bg-[var(--primary)] w-4' : 'bg-[var(--primary)]/20'"></button>
+            }
+          </div>
+        }
+      }
+    </div>
+
+  </div>
+</div>
