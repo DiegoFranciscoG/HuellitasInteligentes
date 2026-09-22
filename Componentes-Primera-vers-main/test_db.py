@@ -9,7 +9,6 @@ import psycopg2
 # variable de entorno DATABASE_URL si hiciera falta apuntar a otra base.
 URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://neondb_owner:npg_3sDZPUXKon7S@ep-empty-paper-atzhb2iu-pooler.c-9.us-east-1.aws.neon.tech/huellitas_inteligentes?sslmode=require",
 )
 
 try:
